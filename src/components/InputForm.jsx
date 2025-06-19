@@ -433,322 +433,322 @@ const BigMSolver = () => {
     setError("");
   };
 
-  // Función para cargar ejemplo con valores negativos
-  const loadNegativeExample = () => {
-    setVariables(["x1", "x2"]);
-    setObjective({ coefficients: [-2, 3], isMaximize: false });
-    setConstraints([
-      { coefficients: [1, -1], operator: ">=", rhs: -2 },
-      { coefficients: [-1, 2], operator: "<=", rhs: -1 },
-      { coefficients: [2, 1], operator: "=", rhs: 4 },
-    ]);
-    setSolution(null);
-    setError("");
-  };
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200 p-4 sm:p-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-2xl p-5 sm:p-8">
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-8 text-center">
+            Solucionador - Método de la Gran M
+          </h1>
 
- return (
-  <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200 p-4 sm:p-6">
-    <div className="max-w-6xl mx-auto">
-      <div className="bg-white rounded-2xl shadow-2xl p-5 sm:p-8">
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-8 text-center">
-          Solucionador - Método de la Gran M
-        </h1>
-
-        {/* Botones de Ejemplo */}
-        <div className="flex flex-wrap justify-center gap-3 mb-8">
-          <button
-            onClick={loadExample}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md font-medium"
-          >
-            Ejemplo Positivo
-          </button>
-          <button
-            onClick={loadNegativeExample}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-md font-medium"
-          >
-            Ejemplo con Negativos
-          </button>
-        </div>
-
-        {/* Variables */}
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-700 mb-4">
-            Variables
-          </h2>
-          <div className="flex flex-wrap gap-3">
-            {variables.map((variable, index) => (
-              <div
-                key={index}
-                className="flex items-center bg-blue-100 text-blue-800 px-3 py-2 rounded-lg"
-              >
-                <span className="font-semibold">{variable}</span>
-                {variables.length > 2 && (
-                  <button
-                    onClick={() => removeVariable(index)}
-                    className="ml-2 text-red-600 hover:text-red-800"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                )}
-              </div>
-            ))}
+          {/* Botones de Ejemplo */}
+          <div className="flex flex-wrap justify-center gap-3 mb-8">
             <button
-              onClick={addVariable}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+              onClick={loadExample}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md font-medium"
             >
-              <Plus size={16} />
-              <span>Agregar Variable</span>
+              Ejemplo Positivo
             </button>
           </div>
-        </section>
 
-        {/* Función Objetivo */}
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-700 mb-4">
-            Función Objetivo
-          </h2>
-          <div className="bg-gray-50 rounded-xl p-5 space-y-4">
-            <div className="flex items-center gap-4">
-              <select
-                value={objective.isMaximize ? "max" : "min"}
-                onChange={(e) =>
-                  setObjective({ ...objective, isMaximize: e.target.value === "max" })
-                }
-                className="border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="min">Minimizar</option>
-                <option value="max">Maximizar</option>
-              </select>
-              <span className="text-lg font-medium">Z =</span>
-            </div>
+          {/* Variables */}
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4">
+              Variables
+            </h2>
             <div className="flex flex-wrap gap-3">
               {variables.map((variable, index) => (
-                <div key={index} className="flex items-center gap-1">
-                  {index > 0 && <span className="text-gray-500">+</span>}
-                  <input
-                    type="text"
-                    inputMode="tel"
-                    value={objective.coefficients[index]}
-                    onChange={(e) => {
-                      const val = handleNumberInput(e.target.value);
-                      e.target.value = val;
-                      updateObjectiveCoeff(index, val);
-                    }}
-                    onBlur={(e) => {
-                      const valid = validateNumber(e.target.value);
-                      e.target.value = valid;
-                      updateObjectiveCoeff(index, valid);
-                    }}
-                    placeholder="0"
-                    className="w-20 px-2 py-1 text-center border rounded-md focus:ring-2 focus:ring-blue-400"
-                  />
-                  <span className="text-blue-700 font-semibold">{variable}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Restricciones */}
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-700 mb-4">
-            Restricciones
-          </h2>
-          <div className="space-y-4">
-            {constraints.map((constraint, cIndex) => (
-              <div key={cIndex} className="bg-gray-100 rounded-xl p-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  {variables.map((variable, vIndex) => (
-                    <div key={vIndex} className="flex items-center gap-1">
-                      {vIndex > 0 && <span className="text-gray-500">+</span>}
-                      <input
-                        type="text"
-                        inputMode="tel"
-                        value={constraint.coefficients[vIndex]}
-                        onChange={(e) => {
-                          const val = handleNumberInput(e.target.value);
-                          e.target.value = val;
-                          updateConstraintCoeff(cIndex, vIndex, val);
-                        }}
-                        onBlur={(e) => {
-                          const valid = validateNumber(e.target.value);
-                          e.target.value = valid;
-                          updateConstraintCoeff(cIndex, vIndex, valid);
-                        }}
-                        placeholder="0"
-                        className="w-20 px-2 py-1 border rounded text-center"
-                      />
-                      <span className="text-blue-700 font-semibold">{variable}</span>
-                    </div>
-                  ))}
-                  <select
-                    value={constraint.operator}
-                    onChange={(e) => updateConstraintOperator(cIndex, e.target.value)}
-                    className="border rounded px-2 py-1"
-                  >
-                    <option value="<=">≤</option>
-                    <option value=">=">≥</option>
-                    <option value="=">=</option>
-                  </select>
-                  <input
-                    type="text"
-                    inputMode="tel"
-                    value={constraint.rhs}
-                    onChange={(e) => {
-                      const val = handleNumberInput(e.target.value);
-                      e.target.value = val;
-                      updateConstraintRHS(cIndex, val);
-                    }}
-                    onBlur={(e) => {
-                      const valid = validateNumber(e.target.value);
-                      e.target.value = valid;
-                      updateConstraintRHS(cIndex, valid);
-                    }}
-                    placeholder="0"
-                    className="w-20 px-2 py-1 border rounded text-center"
-                  />
-                  {constraints.length > 1 && (
+                <div
+                  key={index}
+                  className="flex items-center bg-blue-100 text-blue-800 px-3 py-2 rounded-lg"
+                >
+                  <span className="font-semibold">{variable}</span>
+                  {variables.length > 2 && (
                     <button
-                      onClick={() => removeConstraint(cIndex)}
-                      className="text-red-500 hover:text-red-700 ml-2"
+                      onClick={() => removeVariable(index)}
+                      className="ml-2 text-red-600 hover:text-red-800"
                     >
                       <Trash2 size={16} />
                     </button>
                   )}
                 </div>
-              </div>
-            ))}
-            <button
-              onClick={addConstraint}
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md"
-            >
-              <Plus size={16} />
-              Agregar Restricción
-            </button>
-          </div>
-        </section>
-
-        {/* Botón Resolver */}
-        <div className="text-center mb-8">
-          <button
-            onClick={solveBigM}
-            className="bg-indigo-700 hover:bg-indigo-800 text-white font-semibold px-6 py-3 rounded-lg text-lg flex items-center justify-center gap-2 mx-auto"
-          >
-            <Calculator size={20} />
-            <span>Resolver con Método de la Gran M</span>
-          </button>
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded mb-6">
-            <div className="flex items-center gap-2">
-              <AlertCircle size={20} />
-              <span>{error}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Resultado */}
-        {solution && (
-          <div className="bg-green-50 p-6 rounded-xl border border-green-200 space-y-4">
-            <h3 className="text-xl font-semibold text-green-800">Solución Óptima</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {variables.map((v, i) => (
-                <div key={i} className="bg-white p-3 rounded shadow text-center">
-                  <span className="text-gray-700 font-medium">{v} = </span>
-                  <span className="text-green-700 font-bold">
-                    {Math.round(solution.variables[i] * 1000) / 1000}
-                  </span>
-                </div>
               ))}
-            </div>
-            <div className="text-center">
-              <span className="text-lg text-gray-800 font-semibold">
-                Valor óptimo Z =
-              </span>{" "}
-              <span className="text-green-700 text-xl font-bold">
-                {Math.abs(solution.objectiveValue)}
-              </span>
-            </div>
-
-            <div className="text-center mt-4">
               <button
-                onClick={() => setShowTableau(!showTableau)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+                onClick={addVariable}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
               >
-                {showTableau ? "Ocultar" : "Ver"} Tabla Final
+                <Plus size={16} />
+                <span>Agregar Variable</span>
               </button>
             </div>
-          </div>
-        )}
+          </section>
 
-        {/* Tabla Final */}
-        {showTableau && finalTableau && (
-          <div className="mt-6 bg-gray-100 p-4 rounded-xl border border-gray-300">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              Tabla Final
-              {finalTableau.wasNormalized && (
-                <span className="text-sm text-orange-600 ml-2">
-                  (Normalizada)
-                </span>
-              )}
-            </h3>
-            <div className="overflow-x-auto">
-              <table className="min-w-full border text-sm bg-white rounded-lg shadow-sm">
-                <thead className="bg-gray-200">
-                  <tr>
-                    <th className="px-2 py-1 border">Fila</th>
-                    {variables.map((v, i) => (
-                      <th key={i} className="px-2 py-1 border">{v}</th>
+          {/* Función Objetivo */}
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4">
+              Función Objetivo
+            </h2>
+            <div className="bg-gray-50 rounded-xl p-5 space-y-4">
+              <div className="flex items-center gap-4">
+                <select
+                  value={objective.isMaximize ? "max" : "min"}
+                  onChange={(e) =>
+                    setObjective({
+                      ...objective,
+                      isMaximize: e.target.value === "max",
+                    })
+                  }
+                  className="border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="min">Minimizar</option>
+                  <option value="max">Maximizar</option>
+                </select>
+                <span className="text-lg font-medium">Z =</span>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {variables.map((variable, index) => (
+                  <div key={index} className="flex items-center gap-1">
+                    {index > 0 && <span className="text-gray-500">+</span>}
+                    <input
+                      type="text"
+                      inputMode="tel"
+                      value={objective.coefficients[index]}
+                      onChange={(e) => {
+                        const val = handleNumberInput(e.target.value);
+                        e.target.value = val;
+                        updateObjectiveCoeff(index, val);
+                      }}
+                      onBlur={(e) => {
+                        const valid = validateNumber(e.target.value);
+                        e.target.value = valid;
+                        updateObjectiveCoeff(index, valid);
+                      }}
+                      placeholder="0"
+                      className="w-20 px-2 py-1 text-center border rounded-md focus:ring-2 focus:ring-blue-400"
+                    />
+                    <span className="text-blue-700 font-semibold">
+                      {variable}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Restricciones */}
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4">
+              Restricciones
+            </h2>
+            <div className="space-y-4">
+              {constraints.map((constraint, cIndex) => (
+                <div key={cIndex} className="bg-gray-100 rounded-xl p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {variables.map((variable, vIndex) => (
+                      <div key={vIndex} className="flex items-center gap-1">
+                        {vIndex > 0 && <span className="text-gray-500">+</span>}
+                        <input
+                          type="text"
+                          inputMode="tel"
+                          value={constraint.coefficients[vIndex]}
+                          onChange={(e) => {
+                            const val = handleNumberInput(e.target.value);
+                            e.target.value = val;
+                            updateConstraintCoeff(cIndex, vIndex, val);
+                          }}
+                          onBlur={(e) => {
+                            const valid = validateNumber(e.target.value);
+                            e.target.value = valid;
+                            updateConstraintCoeff(cIndex, vIndex, valid);
+                          }}
+                          placeholder="0"
+                          className="w-20 px-2 py-1 border rounded text-center"
+                        />
+                        <span className="text-blue-700 font-semibold">
+                          {variable}
+                        </span>
+                      </div>
                     ))}
-                    <th className="px-2 py-1 border">Aux</th>
-                    <th className="px-2 py-1 border">RHS</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {finalTableau.tableau.map((row, i) => (
-                    <tr key={i} className="hover:bg-blue-50">
-                      <td className="px-2 py-1 border font-medium">
-                        {i === 0 ? "Z" : `R${i}`}
-                      </td>
-                      {row.slice(0, variables.length).map((val, j) => (
-                        <td key={j} className="px-2 py-1 border text-center">{val}</td>
-                      ))}
-                      <td className="px-2 py-1 border text-xs text-center">
-                        [{row.slice(variables.length, -1).join(", ")}]
-                      </td>
-                      <td className="px-2 py-1 border text-center font-bold">
-                        {row[row.length - 1]}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                    <select
+                      value={constraint.operator}
+                      onChange={(e) =>
+                        updateConstraintOperator(cIndex, e.target.value)
+                      }
+                      className="border rounded px-2 py-1"
+                    >
+                      <option value="<=">≤</option>
+                      <option value=">=">≥</option>
+                      <option value="=">=</option>
+                    </select>
+                    <input
+                      type="text"
+                      inputMode="tel"
+                      value={constraint.rhs}
+                      onChange={(e) => {
+                        const val = handleNumberInput(e.target.value);
+                        e.target.value = val;
+                        updateConstraintRHS(cIndex, val);
+                      }}
+                      onBlur={(e) => {
+                        const valid = validateNumber(e.target.value);
+                        e.target.value = valid;
+                        updateConstraintRHS(cIndex, valid);
+                      }}
+                      placeholder="0"
+                      className="w-20 px-2 py-1 border rounded text-center"
+                    />
+                    {constraints.length > 1 && (
+                      <button
+                        onClick={() => removeConstraint(cIndex)}
+                        className="text-red-500 hover:text-red-700 ml-2"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+              <button
+                onClick={addConstraint}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md"
+              >
+                <Plus size={16} />
+                Agregar Restricción
+              </button>
             </div>
-            <div className="text-sm text-gray-600 mt-2">
-              Variables artificiales: columnas{" "}
-              {finalTableau.artificialStart} -{" "}
-              {finalTableau.artificialStart + finalTableau.numArtificial - 1}
-            </div>
-          </div>
-        )}
+          </section>
 
-        {/* Notas */}
-        <div className="mt-8 bg-blue-50 p-4 rounded-lg text-sm text-blue-800">
-          <h4 className="font-semibold mb-2">Notas:</h4>
-          <ul className="list-disc list-inside space-y-1">
-            <li>El método de la Gran M se usa para restricciones de tipo ≥ o =</li>
-            <li>Se permiten valores negativos</li>
-            <li>Permite valores enteros</li>
-            <li>Se muestra solo el resultado óptimo final</li>
-          </ul>
+          {/* Botón Resolver */}
+          <div className="text-center mb-8">
+            <button
+              onClick={solveBigM}
+              className="bg-indigo-700 hover:bg-indigo-800 text-white font-semibold px-6 py-3 rounded-lg text-lg flex items-center justify-center gap-2 mx-auto"
+            >
+              <Calculator size={20} />
+              <span>Resolver con Método de la Gran M</span>
+            </button>
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded mb-6">
+              <div className="flex items-center gap-2">
+                <AlertCircle size={20} />
+                <span>{error}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Resultado */}
+          {solution && (
+            <div className="bg-green-50 p-6 rounded-xl border border-green-200 space-y-4">
+              <h3 className="text-xl font-semibold text-green-800">
+                Solución Óptima
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {variables.map((v, i) => (
+                  <div
+                    key={i}
+                    className="bg-white p-3 rounded shadow text-center"
+                  >
+                    <span className="text-gray-700 font-medium">{v} = </span>
+                    <span className="text-green-700 font-bold">
+                      {Math.round(solution.variables[i] * 1000) / 1000}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="text-center">
+                <span className="text-lg text-gray-800 font-semibold">
+                  Valor óptimo Z =
+                </span>{" "}
+                <span className="text-green-700 text-xl font-bold">
+                  {Math.abs(solution.objectiveValue)}
+                </span>
+              </div>
+
+              <div className="text-center mt-4">
+                <button
+                  onClick={() => setShowTableau(!showTableau)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+                >
+                  {showTableau ? "Ocultar" : "Ver"} Tabla Final
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Tabla Final */}
+          {showTableau && finalTableau && (
+            <div className="mt-6 bg-gray-100 p-4 rounded-xl border border-gray-300">
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                Tabla Final
+                {finalTableau.wasNormalized && (
+                  <span className="text-sm text-orange-600 ml-2">
+                    (Normalizada)
+                  </span>
+                )}
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full border text-sm bg-white rounded-lg shadow-sm">
+                  <thead className="bg-gray-200">
+                    <tr>
+                      <th className="px-2 py-1 border">Fila</th>
+                      {variables.map((v, i) => (
+                        <th key={i} className="px-2 py-1 border">
+                          {v}
+                        </th>
+                      ))}
+                      <th className="px-2 py-1 border">Aux</th>
+                      <th className="px-2 py-1 border">RHS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {finalTableau.tableau.map((row, i) => (
+                      <tr key={i} className="hover:bg-blue-50">
+                        <td className="px-2 py-1 border font-medium">
+                          {i === 0 ? "Z" : `R${i}`}
+                        </td>
+                        {row.slice(0, variables.length).map((val, j) => (
+                          <td key={j} className="px-2 py-1 border text-center">
+                            {val}
+                          </td>
+                        ))}
+                        <td className="px-2 py-1 border text-xs text-center">
+                          [{row.slice(variables.length, -1).join(", ")}]
+                        </td>
+                        <td className="px-2 py-1 border text-center font-bold">
+                          {row[row.length - 1]}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="text-sm text-gray-600 mt-2">
+                Variables artificiales: columnas {finalTableau.artificialStart}{" "}
+                -{" "}
+                {finalTableau.artificialStart + finalTableau.numArtificial - 1}
+              </div>
+            </div>
+          )}
+
+          {/* Notas */}
+          <div className="mt-8 bg-blue-50 p-4 rounded-lg text-sm text-blue-800">
+            <h4 className="font-semibold mb-2">Notas:</h4>
+            <ul className="list-disc list-inside space-y-1">
+              <li>
+                El método de la Gran M se usa para restricciones de tipo ≥ o =
+              </li>
+              <li>Se permiten valores negativos</li>
+              <li>Permite valores enteros</li>
+              <li>Se muestra solo el resultado óptimo final</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
-
+  );
 };
 
 export default BigMSolver;
