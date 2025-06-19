@@ -633,7 +633,7 @@ const BigMSolver = () => {
           {showTableau && finalTableau && (
             <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                Tableau Final
+                Tabla Final
               </h3>
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
