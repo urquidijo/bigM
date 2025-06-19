@@ -89,18 +89,41 @@ const BigMSolver = () => {
     newConstraints[index].rhs = parseFloat(value) || 0;
     setConstraints(newConstraints);
   };
+
+  // Función para normalizar restricciones con RHS negativo
+  const normalizeConstraints = (constraints) => {
+    return constraints.map(constraint => {
+      if (constraint.rhs < 0) {
+        // Multiplicar toda la restricción por -1 e invertir el operador
+        const newCoefficients = constraint.coefficients.map(c => -c);
+        const newRhs = -constraint.rhs;
+        let newOperator;
+        
+        if (constraint.operator === "<=") {
+          newOperator = ">=";
+        } else if (constraint.operator === ">=") {
+          newOperator = "<=";
+        } else { // "="
+          newOperator = "=";
+        }
+        
+        return {
+          coefficients: newCoefficients,
+          operator: newOperator,
+          rhs: newRhs
+        };
+      }
+      return constraint;
+    });
+  };
+
   //metodo para resolver por BigM
   const solveBigM = () => {
     try {
       setError("");
 
-      // Validar que todas las restricciones tengan RHS >= 0
-      for (let i = 0; i < constraints.length; i++) {
-        if (constraints[i].rhs < 0) {
-          setError(`La restricción ${i + 1} debe tener RHS >= 0`);
-          return;
-        }
-      }
+      // Normalizar restricciones para manejar RHS negativos
+      const normalizedConstraints = normalizeConstraints(constraints);
 
       let M = 1000000; // Valor grande para M
 
@@ -108,10 +131,10 @@ const BigMSolver = () => {
       let numSlack = 0;
       let numArtificial = 0;
 
-      for (let i = 0; i < constraints.length; i++) {
-        if (constraints[i].operator === "<=") {
+      for (let i = 0; i < normalizedConstraints.length; i++) {
+        if (normalizedConstraints[i].operator === "<=") {
           numSlack++;
-        } else if (constraints[i].operator === ">=") {
+        } else if (normalizedConstraints[i].operator === ">=") {
           numSlack++; // variable de exceso
           numArtificial++; // variable artificial
         } else {
@@ -122,7 +145,7 @@ const BigMSolver = () => {
 
       // Dimensiones del tableau
       let numVars = variables.length + numSlack + numArtificial;
-      let numRows = constraints.length + 1; // +1 para función objetivo
+      let numRows = normalizedConstraints.length + 1; // +1 para función objetivo
 
       // Crear tabla inicial
       let tableau = Array(numRows)
@@ -141,10 +164,6 @@ const BigMSolver = () => {
       // Agregar penalización M para variables artificiales
       let artificialIndex = variables.length + numSlack;
       for (let i = 0; i < numArtificial; i++) {
-        // Para ambos casos (max y min), usamos M positivo
-        // El método simplex estándar busca minimizar, así que:
-        // - Para minimización: M positivo penaliza las variables artificiales
-        // - Para maximización: convertimos a min(-Z), así que M positivo también funciona
         tableau[0][artificialIndex + i] = M;
       }
 
@@ -154,19 +173,19 @@ const BigMSolver = () => {
       let currentSlack = 0;
       let currentArtificial = 0;
 
-      for (let i = 0; i < constraints.length; i++) {
+      for (let i = 0; i < normalizedConstraints.length; i++) {
         let row = i + 1; // +1 porque fila 0 es función objetivo
 
         // Coeficientes de variables originales
         for (let j = 0; j < variables.length; j++) {
-          tableau[row][j] = constraints[i].coefficients[j];
+          tableau[row][j] = normalizedConstraints[i].coefficients[j];
         }
 
         // Variables auxiliares según tipo de restricción
-        if (constraints[i].operator === "<=") {
+        if (normalizedConstraints[i].operator === "<=") {
           tableau[row][slackIndex + currentSlack] = 1; // variable de holgura
           currentSlack++;
-        } else if (constraints[i].operator === ">=") {
+        } else if (normalizedConstraints[i].operator === ">=") {
           tableau[row][slackIndex + currentSlack] = -1; // variable de exceso
           tableau[row][artificialIndex + currentArtificial] = 1; // variable artificial
           currentSlack++;
@@ -177,23 +196,20 @@ const BigMSolver = () => {
           currentArtificial++;
         }
 
-        // RHS
-        tableau[row][numVars] = constraints[i].rhs;
+        // RHS (ya normalizado para ser >= 0)
+        tableau[row][numVars] = normalizedConstraints[i].rhs;
       }
 
       // Eliminar variables artificiales de la función objetivo
       artificialIndex = variables.length + numSlack;
       currentArtificial = 0;
 
-      for (let i = 0; i < constraints.length; i++) {
+      for (let i = 0; i < normalizedConstraints.length; i++) {
         if (
-          constraints[i].operator === ">=" ||
-          constraints[i].operator === "="
+          normalizedConstraints[i].operator === ">=" ||
+          normalizedConstraints[i].operator === "="
         ) {
           let row = i + 1;
-          // Eliminar las variables artificiales de la función objetivo
-          // Para ambos casos (max y min), restamos M veces la fila
-          // porque queremos eliminar el coeficiente M de las variables artificiales
           for (let j = 0; j <= numVars; j++) {
             tableau[0][j] -= M * tableau[row][j];
           }
@@ -264,18 +280,15 @@ const BigMSolver = () => {
         return;
       }
 
-      // Verificar factibilidad ANTES de extraer la solución
-      // Si alguna variable artificial tiene valor > 0, el problema es no factible
+      // Verificar factibilidad
       artificialIndex = variables.length + numSlack;
       let isInfeasible = false;
 
       for (let j = artificialIndex; j < artificialIndex + numArtificial; j++) {
-        // Buscar si esta variable artificial es básica
         for (let i = 1; i < numRows; i++) {
           let isBasicInThisRow = true;
           let count = 0;
 
-          // Verificar si esta columna tiene exactamente un 1 en esta fila y 0s en el resto
           for (let row = 0; row < numRows; row++) {
             if (Math.abs(tableau[row][j]) > 1e-10) {
               count++;
@@ -304,12 +317,10 @@ const BigMSolver = () => {
 
       // Identificar variables básicas para las variables originales
       for (let j = 0; j < variables.length; j++) {
-        // Buscar si esta variable es básica
         for (let i = 1; i < numRows; i++) {
           let isBasicInThisRow = true;
           let count = 0;
 
-          // Verificar si esta columna tiene exactamente un 1 en esta fila y 0s en el resto
           for (let row = 0; row < numRows; row++) {
             if (Math.abs(tableau[row][j]) > 1e-10) {
               count++;
@@ -347,11 +358,13 @@ const BigMSolver = () => {
         numVars,
         artificialStart: variables.length + numSlack,
         numArtificial,
+        wasNormalized: constraints.some(c => c.rhs < 0)
       });
     } catch (err) {
       setError("Error al resolver el problema: " + err.message);
     }
   };
+
   //funcion para cargar el 2do ejemplo
   const loadExample = () => {
     setVariables(["x1", "x2"]);
@@ -359,6 +372,19 @@ const BigMSolver = () => {
     setConstraints([
       { coefficients: [1, 1], operator: ">=", rhs: 4 },
       { coefficients: [2, 3], operator: "=", rhs: 12 },
+    ]);
+    setSolution(null);
+    setError("");
+  };
+
+  // Función para cargar ejemplo con valores negativos
+  const loadNegativeExample = () => {
+    setVariables(["x1", "x2"]);
+    setObjective({ coefficients: [-2, 3], isMaximize: false });
+    setConstraints([
+      { coefficients: [1, -1], operator: ">=", rhs: -2 },
+      { coefficients: [-1, 2], operator: "<=", rhs: -1 },
+      { coefficients: [2, 1], operator: "=", rhs: 4 },
     ]);
     setSolution(null);
     setError("");
@@ -372,13 +398,19 @@ const BigMSolver = () => {
             Solucionador - Método de la Gran M
           </h1>
 
-          {/* Botón de ejemplo */}
-          <div className="mb-6 text-center">
+          {/* Botones de ejemplo */}
+          <div className="mb-6 text-center space-x-4">
             <button
               onClick={loadExample}
               className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors"
             >
-              Cargar Ejemplo (Max Z = 5x₁ + 6x₂)
+              Ejemplo Positivo
+            </button>
+            <button
+              onClick={loadNegativeExample}
+              className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+            >
+              Ejemplo con Negativos
             </button>
           </div>
 
@@ -443,20 +475,10 @@ const BigMSolver = () => {
                     <input
                       type="number"
                       value={objective.coefficients[index]}
-                      onKeyDown={(e) => {
-                        if (
-                          e.key === "e" ||
-                          e.key === "E" ||
-                          e.key === "+" ||
-                          e.key === "-"
-                        ) {
-                          e.preventDefault();
-                        }
-                      }}
                       onChange={(e) =>
                         updateObjectiveCoeff(index, e.target.value)
                       }
-                      className="w-16 px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
                       step="0.1"
                     />
                     <span className="text-blue-600 font-medium">
@@ -488,16 +510,6 @@ const BigMSolver = () => {
                         <input
                           type="number"
                           value={constraint.coefficients[varIndex]}
-                          onKeyDown={(e) => {
-                            if (
-                              e.key === "e" ||
-                              e.key === "E" ||
-                              e.key === "+" ||
-                              e.key === "-"
-                            ) {
-                              e.preventDefault();
-                            }
-                          }}
                           onChange={(e) =>
                             updateConstraintCoeff(
                               constraintIndex,
@@ -505,7 +517,7 @@ const BigMSolver = () => {
                               e.target.value
                             )
                           }
-                          className="w-16 px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
                           step="0.1"
                         />
                         <span className="text-blue-600 font-medium">
@@ -530,20 +542,10 @@ const BigMSolver = () => {
                     <input
                       type="number"
                       value={constraint.rhs}
-                      onKeyDown={(e) => {
-                        if (
-                          e.key === "e" ||
-                          e.key === "E" ||
-                          e.key === "+" ||
-                          e.key === "-"
-                        ) {
-                          e.preventDefault();
-                        }
-                      }}
                       onChange={(e) =>
                         updateConstraintRHS(constraintIndex, e.target.value)
                       }
-                      className="w-16 px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
                       step="0.1"
                     />
                     {constraints.length > 1 && (
@@ -634,6 +636,11 @@ const BigMSolver = () => {
             <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 Tabla Final
+                {finalTableau.wasNormalized && (
+                  <span className="text-sm text-orange-600 ml-2">
+                    (Restricciones normalizadas)
+                  </span>
+                )}
               </h3>
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
@@ -695,7 +702,8 @@ const BigMSolver = () => {
               <li>
                 • El método de la Gran M se usa para restricciones de tipo ≥ o =
               </li>
-              <li>• Los valores RHS deben ser no negativos</li>
+              <li>• Se pueden usar valores negativos en coeficientes y RHS</li>
+              <li>• Las restricciones con RHS negativo se normalizan automáticamente</li>
               <li>• La solución muestra solo el resultado final óptimo</li>
             </ul>
           </div>
