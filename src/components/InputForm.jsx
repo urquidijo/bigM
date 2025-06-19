@@ -531,7 +531,7 @@ const BigMSolver = () => {
                     {index > 0 && <span className="text-gray-500">+</span>}
                     <input
                       type="text"
-                      inputMode="decimal"
+                      inputMode="tel"
                        pattern="-?[0-9]*[.,]?[0-9]*"
                       value={objective.coefficients[index]}
                       onChange={(e) => {
@@ -575,7 +575,7 @@ const BigMSolver = () => {
                         )}
                         <input
                           type="text"
-                          inputMode="decimal"
+                          inputMode="tel"
                            pattern="-?[0-9]*[.,]?[0-9]*"
                           value={constraint.coefficients[varIndex]}
                           onChange={(e) => {
