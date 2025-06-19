@@ -532,6 +532,7 @@ const BigMSolver = () => {
                     <input
                       type="text"
                       inputMode="decimal"
+                       pattern="-?[0-9]*[.,]?[0-9]*"
                       value={objective.coefficients[index]}
                       onChange={(e) => {
                         const newValue = handleNumberInput(e.target.value);
@@ -575,6 +576,7 @@ const BigMSolver = () => {
                         <input
                           type="text"
                           inputMode="decimal"
+                           pattern="-?[0-9]*[.,]?[0-9]*"
                           value={constraint.coefficients[varIndex]}
                           onChange={(e) => {
                             const newValue = handleNumberInput(e.target.value);
