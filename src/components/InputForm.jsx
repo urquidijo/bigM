@@ -18,6 +18,61 @@ const BigMSolver = () => {
   const [error, setError] = useState("");
   const [showTableau, setShowTableau] = useState(false);
   const [finalTableau, setFinalTableau] = useState(null);
+
+  // Función para validar y formatear números (solo se usa en onBlur)
+  const validateNumber = (value) => {
+    if (value === "-.") return 0;
+    // Si el valor es exactamente '-' o '.' o '-.', lo permitimos tal cual
+    if (value === "-" || value === ".") return value;
+
+    // Si el valor actual es '0' y se ingresa '-', permitir reemplazar por '-'
+    if (value === "0-") return "-";
+
+    // Si comienza con 0 y luego hay más dígitos (pero no un punto), eliminar el 0 inicial
+    if (/^0\d+$/.test(value)) {
+      return value.replace(/^0+/, "");
+    }
+
+    // Permitir que el usuario escriba cosas como '1.' o '-1.'
+    if (/^-?\d+\.$/.test(value)) return value;
+
+    // Permitir entradas completas tipo '12.34', '-5.6', etc.
+    const num = parseFloat(value);
+    if (!isNaN(num)) return value;
+
+    // En cualquier otro caso (por ejemplo '0-' o algo inválido), volver a 0
+    return "0";
+  };
+
+  const handleNumberInput = (value) => {
+    // Permitir '-' si es el primer carácter
+    if (value === "-" || value === "." || value === "-.") return value;
+
+    // Permitir que si el valor anterior era '0' y el nuevo es '-', retorne '-'
+    if (value === "0-") return "-";
+
+    // Prevenir múltiples signos negativos
+    const minusCount = (value.match(/-/g) || []).length;
+    if (minusCount > 1) return value.slice(0, -1);
+
+    // Prevenir múltiples puntos decimales
+    const dotCount = (value.match(/\./g) || []).length;
+    if (dotCount > 1) return value.slice(0, -1);
+
+    // El signo negativo solo puede estar al inicio
+    if (value.includes("-") && value.indexOf("-") !== 0) {
+      return value.slice(0, -1);
+    }
+
+    // Permitir solo números, un punto decimal y un signo negativo al inicio
+    const regex = /^-?(\d*\.?\d*)$/;
+    if (!regex.test(value)) {
+      return value.slice(0, -1);
+    }
+
+    return value;
+  };
+
   //funcion para adicionar variables
   const addVariable = () => {
     const newVar = `x${variables.length + 1}`;
@@ -67,14 +122,14 @@ const BigMSolver = () => {
   //actualizar los coeficientes
   const updateObjectiveCoeff = (index, value) => {
     const newCoeffs = [...objective.coefficients];
-    newCoeffs[index] = parseFloat(value) || 0;
+    newCoeffs[index] = validateNumber(value);
     setObjective({ ...objective, coefficients: newCoeffs });
   };
   //actualizar las restricciones
   const updateConstraintCoeff = (constraintIndex, varIndex, value) => {
     const newConstraints = [...constraints];
     newConstraints[constraintIndex].coefficients[varIndex] =
-      parseFloat(value) || 0;
+      validateNumber(value);
     setConstraints(newConstraints);
   };
   //actualizar el operador de las restricciones
@@ -86,31 +141,32 @@ const BigMSolver = () => {
   //actualizar el RHS de la restriccion
   const updateConstraintRHS = (index, value) => {
     const newConstraints = [...constraints];
-    newConstraints[index].rhs = parseFloat(value) || 0;
+    newConstraints[index].rhs = validateNumber(value);
     setConstraints(newConstraints);
   };
 
   // Función para normalizar restricciones con RHS negativo
   const normalizeConstraints = (constraints) => {
-    return constraints.map(constraint => {
+    return constraints.map((constraint) => {
       if (constraint.rhs < 0) {
         // Multiplicar toda la restricción por -1 e invertir el operador
-        const newCoefficients = constraint.coefficients.map(c => -c);
+        const newCoefficients = constraint.coefficients.map((c) => -c);
         const newRhs = -constraint.rhs;
         let newOperator;
-        
+
         if (constraint.operator === "<=") {
           newOperator = ">=";
         } else if (constraint.operator === ">=") {
           newOperator = "<=";
-        } else { // "="
+        } else {
+          // "="
           newOperator = "=";
         }
-        
+
         return {
           coefficients: newCoefficients,
           operator: newOperator,
-          rhs: newRhs
+          rhs: newRhs,
         };
       }
       return constraint;
@@ -358,7 +414,7 @@ const BigMSolver = () => {
         numVars,
         artificialStart: variables.length + numSlack,
         numArtificial,
-        wasNormalized: constraints.some(c => c.rhs < 0)
+        wasNormalized: constraints.some((c) => c.rhs < 0),
       });
     } catch (err) {
       setError("Error al resolver el problema: " + err.message);
@@ -391,32 +447,32 @@ const BigMSolver = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 sm:p-6">
       <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">
+        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 sm:mb-8 text-center">
             Solucionador - Método de la Gran M
           </h1>
 
           {/* Botones de ejemplo */}
-          <div className="mb-6 text-center space-x-4">
+          <div className="mb-6 text-center space-x-2 sm:space-x-4">
             <button
               onClick={loadExample}
-              className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors"
+              className="bg-purple-500 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors text-sm sm:text-base"
             >
               Ejemplo Positivo
             </button>
             <button
               onClick={loadNegativeExample}
-              className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+              className="bg-orange-500 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors text-sm sm:text-base"
             >
               Ejemplo con Negativos
             </button>
           </div>
 
           {/* Variables */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">
+          <div className="mb-6 sm:mb-8">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-700 mb-4">
               Variables
             </h2>
             <div className="flex flex-wrap gap-2">
@@ -438,17 +494,18 @@ const BigMSolver = () => {
               ))}
               <button
                 onClick={addVariable}
-                className="flex items-center gap-1 bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                className="flex items-center gap-1 bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm sm:text-base"
               >
                 <Plus size={16} />
-                Agregar Variable
+                <span className="hidden sm:inline">Agregar Variable</span>
+                <span className="sm:hidden">+Var</span>
               </button>
             </div>
           </div>
 
           {/* Función Objetivo */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">
+          <div className="mb-6 sm:mb-8">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-700 mb-4">
               Función Objetivo
             </h2>
             <div className="bg-gray-50 p-4 rounded-lg">
@@ -461,7 +518,7 @@ const BigMSolver = () => {
                       isMaximize: e.target.value === "max",
                     })
                   }
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                 >
                   <option value="min">Minimizar</option>
                   <option value="max">Maximizar</option>
@@ -473,15 +530,23 @@ const BigMSolver = () => {
                   <div key={index} className="flex items-center gap-1">
                     {index > 0 && <span className="text-gray-500">+</span>}
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
                       value={objective.coefficients[index]}
-                      onChange={(e) =>
-                        updateObjectiveCoeff(index, e.target.value)
-                      }
-                      className="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      step="0.1"
+                      onChange={(e) => {
+                        const newValue = handleNumberInput(e.target.value);
+                        e.target.value = newValue;
+                        updateObjectiveCoeff(index, newValue);
+                      }}
+                      onBlur={(e) => {
+                        const validValue = validateNumber(e.target.value);
+                        e.target.value = validValue;
+                        updateObjectiveCoeff(index, validValue);
+                      }}
+                      placeholder="0"
+                      className="w-16 sm:w-20 px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     />
-                    <span className="text-blue-600 font-medium">
+                    <span className="text-blue-600 font-medium text-sm">
                       {variable}
                     </span>
                   </div>
@@ -491,15 +556,15 @@ const BigMSolver = () => {
           </div>
 
           {/* Restricciones */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">
+          <div className="mb-6 sm:mb-8">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-700 mb-4">
               Restricciones
             </h2>
             <div className="space-y-4">
               {constraints.map((constraint, constraintIndex) => (
                 <div
                   key={constraintIndex}
-                  className="bg-gray-50 p-4 rounded-lg"
+                  className="bg-gray-50 p-3 sm:p-4 rounded-lg"
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     {variables.map((variable, varIndex) => (
@@ -508,19 +573,31 @@ const BigMSolver = () => {
                           <span className="text-gray-500">+</span>
                         )}
                         <input
-                          type="number"
+                          type="text"
+                          inputMode="decimal"
                           value={constraint.coefficients[varIndex]}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const newValue = handleNumberInput(e.target.value);
+                            e.target.value = newValue;
                             updateConstraintCoeff(
                               constraintIndex,
                               varIndex,
-                              e.target.value
-                            )
-                          }
-                          className="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          step="0.1"
+                              newValue
+                            );
+                          }}
+                          onBlur={(e) => {
+                            const validValue = validateNumber(e.target.value);
+                            e.target.value = validValue;
+                            updateConstraintCoeff(
+                              constraintIndex,
+                              varIndex,
+                              validValue
+                            );
+                          }}
+                          placeholder="0"
+                          className="w-16 sm:w-20 px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         />
-                        <span className="text-blue-600 font-medium">
+                        <span className="text-blue-600 font-medium text-sm">
                           {variable}
                         </span>
                       </div>
@@ -533,20 +610,28 @@ const BigMSolver = () => {
                           e.target.value
                         )
                       }
-                      className="px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     >
                       <option value="<=">≤</option>
                       <option value=">=">≥</option>
                       <option value="=">=</option>
                     </select>
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
                       value={constraint.rhs}
-                      onChange={(e) =>
-                        updateConstraintRHS(constraintIndex, e.target.value)
-                      }
-                      className="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      step="0.1"
+                      onChange={(e) => {
+                        const newValue = handleNumberInput(e.target.value);
+                        e.target.value = newValue;
+                        updateConstraintRHS(constraintIndex, newValue);
+                      }}
+                      onBlur={(e) => {
+                        const validValue = validateNumber(e.target.value);
+                        e.target.value = validValue;
+                        updateConstraintRHS(constraintIndex, validValue);
+                      }}
+                      placeholder="0"
+                      className="w-16 sm:w-20 px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     />
                     {constraints.length > 1 && (
                       <button
@@ -561,60 +646,64 @@ const BigMSolver = () => {
               ))}
               <button
                 onClick={addConstraint}
-                className="flex items-center gap-1 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+                className="flex items-center gap-1 bg-green-500 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm sm:text-base"
               >
                 <Plus size={16} />
-                Agregar Restricción
+                <span className="hidden sm:inline">Agregar Restricción</span>
+                <span className="sm:hidden">+Restricción</span>
               </button>
             </div>
           </div>
 
           {/* Botón Resolver */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-6 sm:mb-8">
             <button
               onClick={solveBigM}
-              className="flex items-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition-colors mx-auto text-lg font-semibold"
+              className="flex items-center gap-2 bg-indigo-600 text-white px-6 sm:px-8 py-3 rounded-lg hover:bg-indigo-700 transition-colors mx-auto text-base sm:text-lg font-semibold"
             >
               <Calculator size={20} />
-              Resolver con Método de la Gran M
+              <span className="hidden sm:inline">
+                Resolver con Método de la Gran M
+              </span>
+              <span className="sm:hidden">Resolver Gran M</span>
             </button>
           </div>
 
           {/* Error */}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
-              <AlertCircle className="text-red-500" size={20} />
-              <span className="text-red-700">{error}</span>
+              <AlertCircle className="text-red-500 flex-shrink-0" size={20} />
+              <span className="text-red-700 text-sm sm:text-base">{error}</span>
             </div>
           )}
 
           {/* Solución */}
           {solution && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-              <h3 className="text-xl font-semibold text-green-800 mb-4">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 sm:p-6">
+              <h3 className="text-lg sm:text-xl font-semibold text-green-800 mb-4">
                 Solución Óptima
               </h3>
               <div className="space-y-3">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                   {variables.map((variable, index) => (
                     <div
                       key={index}
                       className="bg-white p-3 rounded-lg shadow-sm"
                     >
-                      <span className="font-medium text-gray-700">
+                      <span className="font-medium text-gray-700 text-sm sm:text-base">
                         {variable} ={" "}
                       </span>
-                      <span className="text-green-600 font-bold">
+                      <span className="text-green-600 font-bold text-sm sm:text-base">
                         {Math.round(solution.variables[index] * 1000) / 1000}
                       </span>
                     </div>
                   ))}
                 </div>
                 <div className="bg-white p-4 rounded-lg shadow-sm border-2 border-green-200">
-                  <span className="font-medium text-gray-700">
+                  <span className="font-medium text-gray-700 text-sm sm:text-base">
                     Valor Óptimo de Z ={" "}
                   </span>
-                  <span className="text-green-600 font-bold text-xl">
+                  <span className="text-green-600 font-bold text-lg sm:text-xl">
                     {Math.abs(solution.objectiveValue)}
                   </span>
                 </div>
@@ -623,7 +712,7 @@ const BigMSolver = () => {
               <div className="mt-4">
                 <button
                   onClick={() => setShowTableau(!showTableau)}
-                  className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm sm:text-base"
                 >
                   {showTableau ? "Ocultar" : "Ver"} Tabla Final
                 </button>
@@ -633,49 +722,53 @@ const BigMSolver = () => {
 
           {/* Tableau Final */}
           {showTableau && finalTableau && (
-            <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-4">
                 Tabla Final
                 {finalTableau.wasNormalized && (
-                  <span className="text-sm text-orange-600 ml-2">
+                  <span className="text-xs sm:text-sm text-orange-600 ml-2">
                     (Restricciones normalizadas)
                   </span>
                 )}
               </h3>
               <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
+                <table className="min-w-full text-xs sm:text-sm">
                   <thead>
                     <tr>
-                      <th className="border border-gray-300 px-2 py-1">Fila</th>
+                      <th className="border border-gray-300 px-1 sm:px-2 py-1">
+                        Fila
+                      </th>
                       {variables.map((v, i) => (
                         <th
                           key={i}
-                          className="border border-gray-300 px-2 py-1"
+                          className="border border-gray-300 px-1 sm:px-2 py-1"
                         >
                           {v}
                         </th>
                       ))}
-                      <th className="border border-gray-300 px-2 py-1">
-                        Auxiliares
+                      <th className="border border-gray-300 px-1 sm:px-2 py-1">
+                        Aux
                       </th>
-                      <th className="border border-gray-300 px-2 py-1">RHS</th>
+                      <th className="border border-gray-300 px-1 sm:px-2 py-1">
+                        RHS
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {finalTableau.tableau.map((row, i) => (
                       <tr key={i}>
-                        <td className="border border-gray-300 px-2 py-1 font-medium">
+                        <td className="border border-gray-300 px-1 sm:px-2 py-1 font-medium">
                           {i === 0 ? "Z" : `R${i}`}
                         </td>
                         {row.slice(0, variables.length).map((val, j) => (
                           <td
                             key={j}
-                            className="border border-gray-300 px-2 py-1 text-center"
+                            className="border border-gray-300 px-1 sm:px-2 py-1 text-center"
                           >
                             {val}
                           </td>
                         ))}
-                        <td className="border border-gray-300 px-2 py-1 text-center text-xs">
+                        <td className="border border-gray-300 px-1 sm:px-2 py-1 text-center text-xs">
                           [{row.slice(variables.length, -1).join(", ")}]
                         </td>
                         <td className="border border-gray-300 px-2 py-1 text-center font-bold">
@@ -703,7 +796,10 @@ const BigMSolver = () => {
                 • El método de la Gran M se usa para restricciones de tipo ≥ o =
               </li>
               <li>• Se pueden usar valores negativos en coeficientes y RHS</li>
-              <li>• Las restricciones con RHS negativo se normalizan automáticamente</li>
+              <li>
+                • Las restricciones con RHS negativo se normalizan
+                automáticamente
+              </li>
               <li>• La solución muestra solo el resultado final óptimo</li>
             </ul>
           </div>
