@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Target, Calculator, Settings, Trash2, Plus, Zap, AlertCircle, Eye, EyeOff, BookOpen } from "lucide-react";
+import { Plus, Trash2, Calculator, AlertCircle } from "lucide-react";
 
 const BigMSolver = () => {
   //variables a usar
@@ -18,7 +18,7 @@ const BigMSolver = () => {
   const [error, setError] = useState("");
   const [showTableau, setShowTableau] = useState(false);
   const [finalTableau, setFinalTableau] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+
   // Función para validar y formatear números (solo se usa en onBlur)
   const validateNumber = (value) => {
     if (value === "-.") return 0;
@@ -433,462 +433,322 @@ const BigMSolver = () => {
     setError("");
   };
 
+  // Función para cargar ejemplo con valores negativos
+  const loadNegativeExample = () => {
+    setVariables(["x1", "x2"]);
+    setObjective({ coefficients: [-2, 3], isMaximize: false });
+    setConstraints([
+      { coefficients: [1, -1], operator: ">=", rhs: -2 },
+      { coefficients: [-1, 2], operator: "<=", rhs: -1 },
+      { coefficients: [2, 1], operator: "=", rhs: 4 },
+    ]);
+    setSolution(null);
+    setError("");
+  };
 
  return (
-  <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4 sm:p-6 relative overflow-hidden">
-    {/* Background decorative elements */}
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-3xl"></div>
-      <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-indigo-400/20 to-cyan-400/20 rounded-full blur-3xl"></div>
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-purple-400/10 to-pink-400/10 rounded-full blur-3xl"></div>
-    </div>
-
-    <div className="max-w-7xl mx-auto relative z-10">
-      {/* Header */}
-      <div className="text-center mb-8 sm:mb-12">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl mb-4 shadow-lg">
-          <Calculator className="w-8 h-8 text-white" />
-        </div>
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 via-indigo-900 to-purple-900 bg-clip-text text-transparent mb-4">
-          Solucionador Gran M
+  <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200 p-4 sm:p-6">
+    <div className="max-w-6xl mx-auto">
+      <div className="bg-white rounded-2xl shadow-2xl p-5 sm:p-8">
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-8 text-center">
+          Solucionador - Método de la Gran M
         </h1>
-        <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
-          Método de la Gran M para Programación Lineal con interfaz profesional
-        </p>
-      </div>
 
-      <div className="grid lg:grid-cols-12 gap-6 sm:gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-8">
-          <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-6 sm:p-8">
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-3 mb-8 justify-center">
-              <button
-                onClick={loadExample}
-                className="group relative overflow-hidden bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25 hover:-translate-y-0.5"
+        {/* Botones de Ejemplo */}
+        <div className="flex flex-wrap justify-center gap-3 mb-8">
+          <button
+            onClick={loadExample}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md font-medium"
+          >
+            Ejemplo Positivo
+          </button>
+          <button
+            onClick={loadNegativeExample}
+            className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-md font-medium"
+          >
+            Ejemplo con Negativos
+          </button>
+        </div>
+
+        {/* Variables */}
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-700 mb-4">
+            Variables
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            {variables.map((variable, index) => (
+              <div
+                key={index}
+                className="flex items-center bg-blue-100 text-blue-800 px-3 py-2 rounded-lg"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-700 to-purple-800 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                <span className="relative flex items-center gap-2">
-                  <Target className="w-4 h-4" />
-                  Ejemplo Positivo Max
-                </span>
-              </button>
-            </div>
-
-            {/* Variables Section */}
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">1</span>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-800">Variables de Decisión</h2>
-              </div>
-              
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
-                <div className="flex flex-wrap gap-3 mb-4">
-                  {variables.map((variable, index) => (
-                    <div
-                      key={index}
-                      className="group relative bg-white rounded-lg px-4 py-3 shadow-sm border border-blue-200 hover:shadow-md transition-all duration-200"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-blue-700 text-lg">{variable}</span>
-                        {variables.length > 2 && (
-                          <button
-                            onClick={() => removeVariable(index)}
-                            className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition-all duration-200 hover:scale-110"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                <button
-                  onClick={addVariable}
-                  className="group flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-lg hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 hover:-translate-y-0.5"
-                >
-                  <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" />
-                  <span>Agregar Variable</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Objective Function */}
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">2</span>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-800">Función Objetivo</h2>
-              </div>
-              
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-                  <select
-                    value={objective.isMaximize ? "max" : "min"}
-                    onChange={(e) =>
-                      setObjective({
-                        ...objective,
-                        isMaximize: e.target.value === "max",
-                      })
-                    }
-                    className="px-4 py-3 border-2 border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white font-semibold text-gray-700 shadow-sm"
+                <span className="font-semibold">{variable}</span>
+                {variables.length > 2 && (
+                  <button
+                    onClick={() => removeVariable(index)}
+                    className="ml-2 text-red-600 hover:text-red-800"
                   >
-                    <option value="min">Minimizar</option>
-                    <option value="max">Maximizar</option>
-                  </select>
-                  <div className="text-2xl font-bold text-gray-800">Z =</div>
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              onClick={addVariable}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+            >
+              <Plus size={16} />
+              <span>Agregar Variable</span>
+            </button>
+          </div>
+        </section>
+
+        {/* Función Objetivo */}
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-700 mb-4">
+            Función Objetivo
+          </h2>
+          <div className="bg-gray-50 rounded-xl p-5 space-y-4">
+            <div className="flex items-center gap-4">
+              <select
+                value={objective.isMaximize ? "max" : "min"}
+                onChange={(e) =>
+                  setObjective({ ...objective, isMaximize: e.target.value === "max" })
+                }
+                className="border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="min">Minimizar</option>
+                <option value="max">Maximizar</option>
+              </select>
+              <span className="text-lg font-medium">Z =</span>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {variables.map((variable, index) => (
+                <div key={index} className="flex items-center gap-1">
+                  {index > 0 && <span className="text-gray-500">+</span>}
+                  <input
+                    type="text"
+                    inputMode="tel"
+                    value={objective.coefficients[index]}
+                    onChange={(e) => {
+                      const val = handleNumberInput(e.target.value);
+                      e.target.value = val;
+                      updateObjectiveCoeff(index, val);
+                    }}
+                    onBlur={(e) => {
+                      const valid = validateNumber(e.target.value);
+                      e.target.value = valid;
+                      updateObjectiveCoeff(index, valid);
+                    }}
+                    placeholder="0"
+                    className="w-20 px-2 py-1 text-center border rounded-md focus:ring-2 focus:ring-blue-400"
+                  />
+                  <span className="text-blue-700 font-semibold">{variable}</span>
                 </div>
-                
-                <div className="flex flex-wrap items-center gap-3">
-                  {variables.map((variable, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-white rounded-lg p-3 shadow-sm border border-green-200">
-                      {index > 0 && <span className="text-gray-400 font-medium">+</span>}
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Restricciones */}
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-700 mb-4">
+            Restricciones
+          </h2>
+          <div className="space-y-4">
+            {constraints.map((constraint, cIndex) => (
+              <div key={cIndex} className="bg-gray-100 rounded-xl p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  {variables.map((variable, vIndex) => (
+                    <div key={vIndex} className="flex items-center gap-1">
+                      {vIndex > 0 && <span className="text-gray-500">+</span>}
                       <input
                         type="text"
                         inputMode="tel"
-                        pattern="-?[0-9]*[.,]?[0-9]*"
-                        value={objective.coefficients[index]}
+                        value={constraint.coefficients[vIndex]}
                         onChange={(e) => {
-                          const newValue = handleNumberInput(e.target.value);
-                          e.target.value = newValue;
-                          updateObjectiveCoeff(index, newValue);
+                          const val = handleNumberInput(e.target.value);
+                          e.target.value = val;
+                          updateConstraintCoeff(cIndex, vIndex, val);
                         }}
                         onBlur={(e) => {
-                          const validValue = validateNumber(e.target.value);
-                          e.target.value = validValue;
-                          updateObjectiveCoeff(index, validValue);
+                          const valid = validateNumber(e.target.value);
+                          e.target.value = valid;
+                          updateConstraintCoeff(cIndex, vIndex, valid);
                         }}
                         placeholder="0"
-                        className="w-16 sm:w-20 px-3 py-2 border-2 border-gray-200 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent font-semibold"
+                        className="w-20 px-2 py-1 border rounded text-center"
                       />
-                      <span className="text-green-700 font-bold">{variable}</span>
+                      <span className="text-blue-700 font-semibold">{variable}</span>
                     </div>
                   ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Constraints */}
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">3</span>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-800">Restricciones</h2>
-              </div>
-              
-              <div className="space-y-4">
-                {constraints.map((constraint, constraintIndex) => (
-                  <div
-                    key={constraintIndex}
-                    className="group bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100 hover:shadow-lg transition-all duration-300"
+                  <select
+                    value={constraint.operator}
+                    onChange={(e) => updateConstraintOperator(cIndex, e.target.value)}
+                    className="border rounded px-2 py-1"
                   >
-                    <div className="flex flex-wrap items-center gap-3">
-                      {variables.map((variable, varIndex) => (
-                        <div key={varIndex} className="flex items-center gap-2 bg-white rounded-lg p-3 shadow-sm border border-purple-200">
-                          {varIndex > 0 && <span className="text-gray-400 font-medium">+</span>}
-                          <input
-                            type="text"
-                            inputMode="tel"
-                            pattern="-?[0-9]*[.,]?[0-9]*"
-                            value={constraint.coefficients[varIndex]}
-                            onChange={(e) => {
-                              const newValue = handleNumberInput(e.target.value);
-                              e.target.value = newValue;
-                              updateConstraintCoeff(constraintIndex, varIndex, newValue);
-                            }}
-                            onBlur={(e) => {
-                              const validValue = validateNumber(e.target.value);
-                              e.target.value = validValue;
-                              updateConstraintCoeff(constraintIndex, varIndex, validValue);
-                            }}
-                            placeholder="0"
-                            className="w-16 sm:w-20 px-3 py-2 border-2 border-gray-200 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent font-semibold"
-                          />
-                          <span className="text-purple-700 font-bold">{variable}</span>
-                        </div>
-                      ))}
-                      
-                      <select
-                        value={constraint.operator}
-                        onChange={(e) =>
-                          updateConstraintOperator(constraintIndex, e.target.value)
-                        }
-                        className="px-4 py-3 border-2 border-purple-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white font-bold text-purple-700 shadow-sm"
-                      >
-                        <option value="<=">≤</option>
-                        <option value=">=">≥</option>
-                        <option value="=">=</option>
-                      </select>
-                      
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        value={constraint.rhs}
-                        onChange={(e) => {
-                          const newValue = handleNumberInput(e.target.value);
-                          e.target.value = newValue;
-                          updateConstraintRHS(constraintIndex, newValue);
-                        }}
-                        onBlur={(e) => {
-                          const validValue = validateNumber(e.target.value);
-                          e.target.value = validValue;
-                          updateConstraintRHS(constraintIndex, validValue);
-                        }}
-                        placeholder="0"
-                        className="w-20 sm:w-24 px-3 py-3 border-2 border-purple-200 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent font-bold bg-white shadow-sm"
-                      />
-                      
-                      {constraints.length > 1 && (
-                        <button
-                          onClick={() => removeConstraint(constraintIndex)}
-                          className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition-all duration-200 hover:scale-110 p-2 rounded-lg hover:bg-red-50"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                
-                <button
-                  onClick={addConstraint}
-                  className="group flex items-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-xl hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 hover:-translate-y-0.5 font-semibold"
-                >
-                  <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" />
-                  <span>Agregar Restricción</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Solve Button */}
-            <div className="text-center mb-8">
-              <button
-                onClick={solveBigM}
-                disabled={isLoading}
-                className="group relative overflow-hidden bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:shadow-2xl hover:shadow-indigo-500/25 transition-all duration-500 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-                <span className="relative flex items-center gap-3">
-                  {isLoading ? (
-                    <>
-                      <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      <span>Resolviendo...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
-                      <span>Resolver con Gran M</span>
-                    </>
+                    <option value="<=">≤</option>
+                    <option value=">=">≥</option>
+                    <option value="=">=</option>
+                  </select>
+                  <input
+                    type="text"
+                    inputMode="tel"
+                    value={constraint.rhs}
+                    onChange={(e) => {
+                      const val = handleNumberInput(e.target.value);
+                      e.target.value = val;
+                      updateConstraintRHS(cIndex, val);
+                    }}
+                    onBlur={(e) => {
+                      const valid = validateNumber(e.target.value);
+                      e.target.value = valid;
+                      updateConstraintRHS(cIndex, valid);
+                    }}
+                    placeholder="0"
+                    className="w-20 px-2 py-1 border rounded text-center"
+                  />
+                  {constraints.length > 1 && (
+                    <button
+                      onClick={() => removeConstraint(cIndex)}
+                      className="text-red-500 hover:text-red-700 ml-2"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   )}
-                </span>
-              </button>
-            </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="mb-8 p-4 bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-500 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <AlertCircle className="text-red-500 flex-shrink-0" size={24} />
-                  <span className="text-red-800 font-medium">{error}</span>
                 </div>
               </div>
-            )}
-
-            {/* Solution */}
-            {solution && (
-              <div className="mb-8 bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 rounded-2xl p-6 border border-green-200 shadow-lg">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                    <Target className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-green-800">Solución Óptima</h3>
-                </div>
-                
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {variables.map((variable, index) => (
-                      <div
-                        key={index}
-                        className="bg-white rounded-xl p-4 shadow-md border border-green-200 hover:shadow-lg transition-all duration-300"
-                      >
-                        <div className="text-center">
-                          <div className="text-sm font-medium text-gray-600 mb-1">Variable</div>
-                          <div className="text-xl font-bold text-gray-800 mb-2">{variable}</div>
-                          <div className="text-2xl font-bold text-green-600">
-                            {Math.round(solution.variables[index] * 1000) / 1000}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-6 text-white shadow-lg">
-                    <div className="text-center">
-                      <div className="text-green-100 font-medium mb-2">Valor Óptimo</div>
-                      <div className="text-4xl font-bold">
-                        Z = {Math.abs(solution.objectiveValue)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6 text-center">
-                  <button
-                    onClick={() => setShowTableau(!showTableau)}
-                    className="group flex items-center gap-2 bg-blue-600/90 backdrop-blur text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 hover:shadow-lg mx-auto"
-                  >
-                    {showTableau ? <EyeOff size={20} /> : <Eye size={20} />}
-                    <span>{showTableau ? 'Ocultar' : 'Ver'} Tabla Final</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Final Tableau */}
-            {showTableau && finalTableau && (
-              <div className="mb-8 bg-gradient-to-r from-gray-50 to-slate-50 rounded-2xl p-6 border border-gray-200 shadow-lg">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-gradient-to-r from-gray-600 to-slate-700 rounded-xl flex items-center justify-center">
-                    <BookOpen className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-800">
-                    Tabla Final del Simplex
-                    {finalTableau.wasNormalized && (
-                      <span className="text-sm text-orange-600 ml-2 font-normal">
-                        (Restricciones normalizadas)
-                      </span>
-                    )}
-                  </h3>
-                </div>
-                
-                <div className="overflow-x-auto">
-                  <div className="min-w-full bg-white rounded-xl shadow-sm border border-gray-200">
-                    <table className="min-w-full">
-                      <thead className="bg-gradient-to-r from-gray-100 to-slate-100">
-                        <tr>
-                          <th className="border-b border-gray-200 px-4 py-3 text-left font-bold text-gray-700">
-                            Fila
-                          </th>
-                          {variables.map((v, i) => (
-                            <th
-                              key={i}
-                              className="border-b border-gray-200 px-4 py-3 text-center font-bold text-gray-700"
-                            >
-                              {v}
-                            </th>
-                          ))}
-                          <th className="border-b border-gray-200 px-4 py-3 text-center font-bold text-gray-700">
-                            Variables Auxiliares
-                          </th>
-                          <th className="border-b border-gray-200 px-4 py-3 text-center font-bold text-gray-700">
-                            RHS
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {finalTableau.tableau.map((row, i) => (
-                          <tr key={i} className={i === 0 ? 'bg-blue-50' : 'hover:bg-gray-50'}>
-                            <td className="border-b border-gray-100 px-4 py-3 font-bold text-gray-800">
-                              {i === 0 ? 'Z' : `R${i}`}
-                            </td>
-                            {row.slice(0, variables.length).map((val, j) => (
-                              <td
-                                key={j}
-                                className="border-b border-gray-100 px-4 py-3 text-center font-medium"
-                              >
-                                {val}
-                              </td>
-                            ))}
-                            <td className="border-b border-gray-100 px-4 py-3 text-center text-sm text-gray-600 font-mono">
-                              [{row.slice(variables.length, -1).join(', ')}]
-                            </td>
-                            <td className="border-b border-gray-100 px-4 py-3 text-center font-bold text-lg">
-                              {row[row.length - 1]}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-700">
-                    <strong>Variables artificiales:</strong> Columnas {finalTableau.artificialStart} - {finalTableau.artificialStart + finalTableau.numArtificial - 1}
-                  </p>
-                </div>
-              </div>
-            )}
+            ))}
+            <button
+              onClick={addConstraint}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md"
+            >
+              <Plus size={16} />
+              Agregar Restricción
+            </button>
           </div>
+        </section>
+
+        {/* Botón Resolver */}
+        <div className="text-center mb-8">
+          <button
+            onClick={solveBigM}
+            className="bg-indigo-700 hover:bg-indigo-800 text-white font-semibold px-6 py-3 rounded-lg text-lg flex items-center justify-center gap-2 mx-auto"
+          >
+            <Calculator size={20} />
+            <span>Resolver con Método de la Gran M</span>
+          </button>
         </div>
 
-        {/* Sidebar */}
-        <div className="lg:col-span-4">
-          <div className="sticky top-6 space-y-6">
-            {/* Info Card */}
-            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-800">Información</h3>
-              </div>
-              
-              <div className="space-y-3 text-sm text-gray-700">
-                <div className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <p>El método de la Gran M se usa para restricciones ≥ o =</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <p>Se pueden usar coeficientes y RHS negativos</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <p>Permite valores enteros</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <p>La solución muestra el resultado óptimo final</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Tips */}
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-100">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-800">Consejos Rápidos</h3>
-              </div>
-              
-              <div className="space-y-3 text-sm">
-                <div className="bg-white/60 rounded-lg p-3 border border-white/40">
-                  <p className="font-semibold text-indigo-700 mb-1">Maximización vs Minimización</p>
-                  <p className="text-gray-600">Cambia fácilmente entre maximizar y minimizar la función objetivo</p>
-                </div>
-                <div className="bg-white/60 rounded-lg p-3 border border-white/40">
-                  <p className="font-semibold text-purple-700 mb-1">Variables Dinámicas</p>
-                  <p className="text-gray-600">Agrega o elimina variables según tu problema</p>
-                </div>
-                <div className="bg-white/60 rounded-lg p-3 border border-white/40">
-                  <p className="font-semibold text-pink-700 mb-1">Restricciones Flexibles</p>
-                  <p className="text-gray-600">Soporta ≤, ≥ y = en las restricciones</p>
-                </div>
-              </div>
+        {/* Error */}
+        {error && (
+          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded mb-6">
+            <div className="flex items-center gap-2">
+              <AlertCircle size={20} />
+              <span>{error}</span>
             </div>
           </div>
+        )}
+
+        {/* Resultado */}
+        {solution && (
+          <div className="bg-green-50 p-6 rounded-xl border border-green-200 space-y-4">
+            <h3 className="text-xl font-semibold text-green-800">Solución Óptima</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {variables.map((v, i) => (
+                <div key={i} className="bg-white p-3 rounded shadow text-center">
+                  <span className="text-gray-700 font-medium">{v} = </span>
+                  <span className="text-green-700 font-bold">
+                    {Math.round(solution.variables[i] * 1000) / 1000}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="text-center">
+              <span className="text-lg text-gray-800 font-semibold">
+                Valor óptimo Z =
+              </span>{" "}
+              <span className="text-green-700 text-xl font-bold">
+                {Math.abs(solution.objectiveValue)}
+              </span>
+            </div>
+
+            <div className="text-center mt-4">
+              <button
+                onClick={() => setShowTableau(!showTableau)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+              >
+                {showTableau ? "Ocultar" : "Ver"} Tabla Final
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Tabla Final */}
+        {showTableau && finalTableau && (
+          <div className="mt-6 bg-gray-100 p-4 rounded-xl border border-gray-300">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Tabla Final
+              {finalTableau.wasNormalized && (
+                <span className="text-sm text-orange-600 ml-2">
+                  (Normalizada)
+                </span>
+              )}
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full border text-sm bg-white rounded-lg shadow-sm">
+                <thead className="bg-gray-200">
+                  <tr>
+                    <th className="px-2 py-1 border">Fila</th>
+                    {variables.map((v, i) => (
+                      <th key={i} className="px-2 py-1 border">{v}</th>
+                    ))}
+                    <th className="px-2 py-1 border">Aux</th>
+                    <th className="px-2 py-1 border">RHS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {finalTableau.tableau.map((row, i) => (
+                    <tr key={i} className="hover:bg-blue-50">
+                      <td className="px-2 py-1 border font-medium">
+                        {i === 0 ? "Z" : `R${i}`}
+                      </td>
+                      {row.slice(0, variables.length).map((val, j) => (
+                        <td key={j} className="px-2 py-1 border text-center">{val}</td>
+                      ))}
+                      <td className="px-2 py-1 border text-xs text-center">
+                        [{row.slice(variables.length, -1).join(", ")}]
+                      </td>
+                      <td className="px-2 py-1 border text-center font-bold">
+                        {row[row.length - 1]}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="text-sm text-gray-600 mt-2">
+              Variables artificiales: columnas{" "}
+              {finalTableau.artificialStart} -{" "}
+              {finalTableau.artificialStart + finalTableau.numArtificial - 1}
+            </div>
+          </div>
+        )}
+
+        {/* Notas */}
+        <div className="mt-8 bg-blue-50 p-4 rounded-lg text-sm text-blue-800">
+          <h4 className="font-semibold mb-2">Notas:</h4>
+          <ul className="list-disc list-inside space-y-1">
+            <li>El método de la Gran M se usa para restricciones de tipo ≥ o =</li>
+            <li>Se permiten valores negativos</li>
+            <li>Permite valores enteros</li>
+            <li>Se muestra solo el resultado óptimo final</li>
+          </ul>
         </div>
       </div>
     </div>
   </div>
 );
+
 };
 
 export default BigMSolver;
