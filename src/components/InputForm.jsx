@@ -5,19 +5,19 @@ const BigMSolver = () => {
   //variables a usar
   const [variables, setVariables] = useState(["x1", "x2"]);
   const [objective, setObjective] = useState({
-    coefficients: [5, 4],
-    isMaximize: false,
+    coeficientes: [5, 4],
+    esMaximizacion: false,
   });
   //un objeto para guardar las restricciones
-  const [constraints, setConstraints] = useState([
-    { coefficients: [1, 1], operator: ">=", rhs: 5 },
-    { coefficients: [2, 1], operator: "<=", rhs: 10 },
-    { coefficients: [1, 3], operator: "=", rhs: 12 },
+  const [restricciones, setRestricciones] = useState([
+    { coeficientes: [1, 1], operador: ">=", rhs: 5 },
+    { coeficientes: [2, 1], operador: "<=", rhs: 10 },
+    { coeficientes: [1, 3], operador: "=", rhs: 12 },
   ]);
   const [solution, setSolution] = useState(null);
   const [error, setError] = useState("");
-  const [showTableau, setShowTableau] = useState(false);
-  const [finalTableau, setFinalTableau] = useState(null);
+  const [mostrarTabla, setMostrarTabla] = useState(false);
+  const [tablaFinal, setTablaFinal] = useState(null);
 
   // Función para validar y formatear números (solo se usa en onBlur)
   const validateNumber = (value) => {
@@ -105,12 +105,12 @@ const BigMSolver = () => {
     setVariables([...variables, newVar]);
     setObjective({
       ...objective,
-      coefficients: [...objective.coefficients, 0],
+      coeficientes: [...objective.coeficientes, 0],
     });
-    setConstraints(
-      constraints.map((c) => ({
+    setRestricciones(
+      restricciones.map((c) => ({
         ...c,
-        coefficients: [...c.coefficients, 0],
+        coeficientes: [...c.coeficientes, 0],
       }))
     );
   };
@@ -122,78 +122,78 @@ const BigMSolver = () => {
     setVariables(variables.filter((_, i) => i !== index));
     setObjective({
       ...objective,
-      coefficients: objective.coefficients.filter((_, i) => i !== index),
+      coeficientes: objective.coeficientes.filter((_, i) => i !== index),
     });
-    setConstraints(
-      constraints.map((c) => ({
+    setRestricciones(
+      restricciones.map((c) => ({
         ...c,
-        coefficients: c.coefficients.filter((_, i) => i !== index),
+        coeficientes: c.coeficientes.filter((_, i) => i !== index),
       }))
     );
   };
   //adicionar restriccion
   const addConstraint = () => {
-    setConstraints([
-      ...constraints,
+    setRestricciones([
+      ...restricciones,
       {
-        coefficients: new Array(variables.length).fill(0),
-        operator: ">=",
+        coeficientes: new Array(variables.length).fill(0),
+        operador: ">=",
         rhs: 0,
       },
     ]);
   };
   //eliminar restriccion
   const removeConstraint = (index) => {
-    if (constraints.length <= 1) return;
-    setConstraints(constraints.filter((_, i) => i !== index));
+    if (restricciones.length <= 1) return;
+    setRestricciones(restricciones.filter((_, i) => i !== index));
   };
   //actualizar los coeficientes
   const updateObjectiveCoeff = (index, value) => {
-    const newCoeffs = [...objective.coefficients];
+    const newCoeffs = [...objective.coeficientes];
     newCoeffs[index] = validateNumber(value);
-    setObjective({ ...objective, coefficients: newCoeffs });
+    setObjective({ ...objective, coeficientes: newCoeffs });
   };
   //actualizar las restricciones
   const updateConstraintCoeff = (constraintIndex, varIndex, value) => {
-    const newConstraints = [...constraints];
-    newConstraints[constraintIndex].coefficients[varIndex] =
+    const newrestricciones = [...restricciones];
+    newrestricciones[constraintIndex].coeficientes[varIndex] =
       validateNumber(value);
-    setConstraints(newConstraints);
+    setRestricciones(newrestricciones);
   };
   //actualizar el operador de las restricciones
-  const updateConstraintOperator = (index, operator) => {
-    const newConstraints = [...constraints];
-    newConstraints[index].operator = operator;
-    setConstraints(newConstraints);
+  const updateConstraintoperador = (index, operador) => {
+    const newrestricciones = [...restricciones];
+    newrestricciones[index].operador = operador;
+    setRestricciones(newrestricciones);
   };
   //actualizar el RHS de la restriccion
   const updateConstraintRHS = (index, value) => {
-    const newConstraints = [...constraints];
-    newConstraints[index].rhs = validateNumber(value);
-    setConstraints(newConstraints);
+    const newrestricciones = [...restricciones];
+    newrestricciones[index].rhs = validateNumber(value);
+    setRestricciones(newrestricciones);
   };
 
   // Función para normalizar restricciones con RHS negativo
-  const normalizeConstraints = (constraints) => {
-    return constraints.map((constraint) => {
+  const normalizerestricciones = (restricciones) => {
+    return restricciones.map((constraint) => {
       if (constraint.rhs < 0) {
         // Multiplicar toda la restricción por -1 e invertir el operador
-        const newCoefficients = constraint.coefficients.map((c) => -c);
+        const newcoeficientes = constraint.coeficientes.map((c) => -c);
         const newRhs = -constraint.rhs;
-        let newOperator;
+        let newoperador;
 
-        if (constraint.operator === "<=") {
-          newOperator = ">=";
-        } else if (constraint.operator === ">=") {
-          newOperator = "<=";
+        if (constraint.operador === "<=") {
+          newoperador = ">=";
+        } else if (constraint.operador === ">=") {
+          newoperador = "<=";
         } else {
           // "="
-          newOperator = "=";
+          newoperador = "=";
         }
 
         return {
-          coefficients: newCoefficients,
-          operator: newOperator,
+          coeficientes: newcoeficientes,
+          operador: newoperador,
           rhs: newRhs,
         };
       }
@@ -207,7 +207,7 @@ const BigMSolver = () => {
       setError("");
 
       // Normalizar restricciones para manejar RHS negativos
-      const normalizedConstraints = normalizeConstraints(constraints);
+      const normalizedrestricciones = normalizerestricciones(restricciones);
 
       let M = 1000000; // Valor grande para M
 
@@ -215,10 +215,10 @@ const BigMSolver = () => {
       let numSlack = 0;
       let numArtificial = 0;
 
-      for (let i = 0; i < normalizedConstraints.length; i++) {
-        if (normalizedConstraints[i].operator === "<=") {
+      for (let i = 0; i < normalizedrestricciones.length; i++) {
+        if (normalizedrestricciones[i].operador === "<=") {
           numSlack++;
-        } else if (normalizedConstraints[i].operator === ">=") {
+        } else if (normalizedrestricciones[i].operador === ">=") {
           numSlack++; // variable de exceso
           numArtificial++; // variable artificial
         } else {
@@ -229,7 +229,7 @@ const BigMSolver = () => {
 
       // Dimensiones del tableau
       let numVars = variables.length + numSlack + numArtificial;
-      let numRows = normalizedConstraints.length + 1; // +1 para función objetivo
+      let numRows = normalizedrestricciones.length + 1; // +1 para función objetivo
 
       // Crear tabla inicial
       let tableau = Array(numRows)
@@ -238,10 +238,10 @@ const BigMSolver = () => {
 
       // Configurar función objetivo (fila 0)
       for (let i = 0; i < variables.length; i++) {
-        if (objective.isMaximize) {
-          tableau[0][i] = -objective.coefficients[i];
+        if (objective.esMaximizacion) {
+          tableau[0][i] = -objective.coeficientes[i];
         } else {
-          tableau[0][i] = objective.coefficients[i];
+          tableau[0][i] = objective.coeficientes[i];
         }
       }
 
@@ -257,19 +257,19 @@ const BigMSolver = () => {
       let currentSlack = 0;
       let currentArtificial = 0;
 
-      for (let i = 0; i < normalizedConstraints.length; i++) {
+      for (let i = 0; i < normalizedrestricciones.length; i++) {
         let row = i + 1; // +1 porque fila 0 es función objetivo
 
         // Coeficientes de variables originales
         for (let j = 0; j < variables.length; j++) {
-          tableau[row][j] = normalizedConstraints[i].coefficients[j];
+          tableau[row][j] = normalizedrestricciones[i].coeficientes[j];
         }
 
         // Variables auxiliares según tipo de restricción
-        if (normalizedConstraints[i].operator === "<=") {
+        if (normalizedrestricciones[i].operador === "<=") {
           tableau[row][slackIndex + currentSlack] = 1; // variable de holgura
           currentSlack++;
-        } else if (normalizedConstraints[i].operator === ">=") {
+        } else if (normalizedrestricciones[i].operador === ">=") {
           tableau[row][slackIndex + currentSlack] = -1; // variable de exceso
           tableau[row][artificialIndex + currentArtificial] = 1; // variable artificial
           currentSlack++;
@@ -281,17 +281,17 @@ const BigMSolver = () => {
         }
 
         // RHS (ya normalizado para ser >= 0)
-        tableau[row][numVars] = normalizedConstraints[i].rhs;
+        tableau[row][numVars] = normalizedrestricciones[i].rhs;
       }
 
       // Eliminar variables artificiales de la función objetivo
       artificialIndex = variables.length + numSlack;
       currentArtificial = 0;
 
-      for (let i = 0; i < normalizedConstraints.length; i++) {
+      for (let i = 0; i < normalizedrestricciones.length; i++) {
         if (
-          normalizedConstraints[i].operator === ">=" ||
-          normalizedConstraints[i].operator === "="
+          normalizedrestricciones[i].operador === ">=" ||
+          normalizedrestricciones[i].operador === "="
         ) {
           let row = i + 1;
           for (let j = 0; j <= numVars; j++) {
@@ -424,7 +424,7 @@ const BigMSolver = () => {
 
       // Calcular valor objetivo
       let objectiveValue = tableau[0][numVars];
-      if (objective.isMaximize) {
+      if (objective.esMaximizacion) {
         objectiveValue = -objectiveValue;
       }
 
@@ -474,14 +474,14 @@ const BigMSolver = () => {
       }
 
       // Guardar tableau final para debugging
-      setFinalTableau({
+      setTablaFinal({
         tableau: tableau.map((row) =>
           row.map((val) => Math.round(val * 1000) / 1000)
         ),
         numVars,
         artificialStart: variables.length + numSlack,
         numArtificial,
-        wasNormalized: constraints.some((c) => c.rhs < 0),
+        wasNormalized: restricciones.some((c) => c.rhs < 0),
         basicVariables,
         allVariableNames,
       });
@@ -493,10 +493,10 @@ const BigMSolver = () => {
   //funcion para cargar el 2do ejemplo
   const loadExample = () => {
     setVariables(["x1", "x2"]);
-    setObjective({ coefficients: [5, 6], isMaximize: true });
-    setConstraints([
-      { coefficients: [1, 1], operator: ">=", rhs: 4 },
-      { coefficients: [2, 3], operator: "=", rhs: 12 },
+    setObjective({ coeficientes: [5, 6], esMaximizacion: true });
+    setRestricciones([
+      { coeficientes: [1, 1], operador: ">=", rhs: 4 },
+      { coeficientes: [2, 3], operador: "=", rhs: 12 },
     ]);
     setSolution(null);
     setError("");
@@ -572,11 +572,11 @@ const BigMSolver = () => {
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 space-y-4">
                 <div className="flex items-center gap-4">
                   <select
-                    value={objective.isMaximize ? "max" : "min"}
+                    value={objective.esMaximizacion ? "max" : "min"}
                     onChange={(e) =>
                       setObjective({
                         ...objective,
-                        isMaximize: e.target.value === "max",
+                        esMaximizacion: e.target.value === "max",
                       })
                     }
                     className="border border-amber-300 bg-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
@@ -597,7 +597,7 @@ const BigMSolver = () => {
                       <input
                         type="text"
                         inputMode="tel"
-                        value={objective.coefficients[index]}
+                        value={objective.coeficientes[index]}
                         onChange={(e) => {
                           const val = handleNumberInput(e.target.value);
                           e.target.value = val;
@@ -628,7 +628,7 @@ const BigMSolver = () => {
                 Restricciones
               </h2>
               <div className="space-y-4">
-                {constraints.map((constraint, cIndex) => (
+                {restricciones.map((constraint, cIndex) => (
                   <div
                     key={cIndex}
                     className="bg-emerald-50 border border-emerald-200 rounded-xl p-4"
@@ -642,7 +642,7 @@ const BigMSolver = () => {
                           <input
                             type="text"
                             inputMode="tel"
-                            value={constraint.coefficients[vIndex]}
+                            value={constraint.coeficientes[vIndex]}
                             onChange={(e) => {
                               const val = handleNumberInput(e.target.value);
                               e.target.value = val;
@@ -663,9 +663,9 @@ const BigMSolver = () => {
                         </div>
                       ))}
                       <select
-                        value={constraint.operator}
+                        value={constraint.operador}
                         onChange={(e) =>
-                          updateConstraintOperator(cIndex, e.target.value)
+                          updateConstraintoperador(cIndex, e.target.value)
                         }
                         className="border border-emerald-300 bg-white rounded-lg px-3 py-2 text-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
                       >
@@ -691,7 +691,7 @@ const BigMSolver = () => {
                         placeholder="0"
                         className="w-20 px-3 py-2 border border-emerald-300 bg-white rounded-lg text-center focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
                       />
-                      {constraints.length > 1 && (
+                      {restricciones.length > 1 && (
                         <button
                           onClick={() => removeConstraint(cIndex)}
                           className="text-red-500 hover:text-red-700 p-1 rounded transition-colors"
@@ -767,10 +767,10 @@ const BigMSolver = () => {
                   </div>
 
                   <button
-                    onClick={() => setShowTableau(!showTableau)}
+                    onClick={() => setMostrarTabla(!mostrarTabla)}
                     className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg border border-slate-300 transition-colors"
                   >
-                    {showTableau ? "Ocultar" : "Ver"} Tabla Final
+                    {mostrarTabla ? "Ocultar" : "Ver"} Tabla Final
                   </button>
                 </div>
               </div>
@@ -792,12 +792,12 @@ const BigMSolver = () => {
         </div>
 
         {/* Tabla Final */}
-        {showTableau && finalTableau && (
+        {mostrarTabla && tablaFinal && (
           <div className="mt-8 bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
             <h3 className="text-xl font-semibold text-slate-800 mb-4 flex items-center gap-2">
               <span className="w-2 h-2 bg-slate-600 rounded-full"></span>
               Tabla Simplex Final
-              {finalTableau.wasNormalized && (
+              {tablaFinal.wasNormalized && (
                 <span className="text-sm bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
                   Normalizada
                 </span>
@@ -828,7 +828,7 @@ const BigMSolver = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {finalTableau.tableau.map((row, i) => (
+                  {tablaFinal.tableau.map((row, i) => (
                     <tr
                       key={i}
                       className="border-b border-slate-100 hover:bg-slate-25"
@@ -836,7 +836,7 @@ const BigMSolver = () => {
                       <td className="px-4 py-3 font-medium text-slate-700">
                         {i === 0
                           ? "Z"
-                          : finalTableau.basicVariables[i - 1] || `R${i}`}
+                          : tablaFinal.basicVariables[i - 1] || `R${i}`}
                       </td>
                       {row.slice(0, variables.length).map((val, j) => (
                         <td
@@ -876,12 +876,12 @@ const BigMSolver = () => {
                   </div>
                 </div>
               </div>
-              {finalTableau.numArtificial > 0 && (
+              {tablaFinal.numArtificial > 0 && (
                 <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
                   Variables artificiales en columnas{" "}
-                  {finalTableau.artificialStart} -{" "}
-                  {finalTableau.artificialStart +
-                    finalTableau.numArtificial -
+                  {tablaFinal.artificialStart} -{" "}
+                  {tablaFinal.artificialStart +
+                    tablaFinal.numArtificial -
                     1}
                 </div>
               )}
