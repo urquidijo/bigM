@@ -72,6 +72,32 @@ const BigMSolver = () => {
 
     return value;
   };
+  // Función para manejar el pegado de texto
+  const handlePaste = (e) => {
+    e.preventDefault(); // Prevenir el pegado por defecto
+    
+    // Obtener el texto del portapapeles
+    const pastedText = e.clipboardData.getData('text');
+    
+    // Validar que sea un número válido
+    const cleanedText = pastedText.trim();
+    
+    // Verificar si es un número válido (incluyendo negativos y decimales)
+    const numberRegex = /^-?(\d+\.?\d*|\d*\.\d+)$/;
+    
+    if (numberRegex.test(cleanedText)) {
+      // Si es un número válido, usar la función de validación existente
+      const validatedValue = handleNumberInput(cleanedText);
+      
+      // Actualizar el input manualmente
+      e.target.value = validatedValue;
+      
+      // Disparar el evento onChange manualmente
+      const changeEvent = new Event('input', { bubbles: true });
+      e.target.dispatchEvent(changeEvent);
+    }
+    // Si no es un número válido, simplemente no hacer nada (ignorar el pegado)
+  };
 
   //funcion para adicionar variables
   const addVariable = () => {
@@ -582,6 +608,7 @@ const BigMSolver = () => {
                           e.target.value = valid;
                           updateObjectiveCoeff(index, valid);
                         }}
+                        onPaste={handlePaste}
                         placeholder="0"
                         className="w-20 px-3 py-2 text-center border border-amber-300 bg-white rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
                       />
@@ -626,6 +653,7 @@ const BigMSolver = () => {
                               e.target.value = valid;
                               updateConstraintCoeff(cIndex, vIndex, valid);
                             }}
+                            onPaste={handlePaste}
                             placeholder="0"
                             className="w-20 px-3 py-2 border border-emerald-300 bg-white rounded-lg text-center focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
                           />
@@ -659,6 +687,7 @@ const BigMSolver = () => {
                           e.target.value = valid;
                           updateConstraintRHS(cIndex, valid);
                         }}
+                        onPaste={handlePaste}
                         placeholder="0"
                         className="w-20 px-3 py-2 border border-emerald-300 bg-white rounded-lg text-center focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
                       />
