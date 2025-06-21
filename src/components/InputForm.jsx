@@ -88,9 +88,11 @@ const BigMSolver = () => {
       }))
     );
   };
-  //funcion para eliminar una variable
+  //funcion para remover una variable
   const removeVariable = (index) => {
-    if (variables.length <= 2) return;
+    // Solo permitir eliminar si hay más de 2 variables y es la última
+    if (variables.length <= 2 || index !== variables.length - 1) return;
+
     setVariables(variables.filter((_, i) => i !== index));
     setObjective({
       ...objective,
@@ -406,6 +408,45 @@ const BigMSolver = () => {
         isOptimal: true,
       });
 
+      // Identificar variables básicas para la tabla final
+      let basicVariables = new Array(numRows - 1).fill("No básica");
+
+      // Crear nombres de todas las variables (originales + auxiliares)
+      let allVariableNames = [...variables];
+
+      // Agregar nombres de variables de holgura/exceso
+      for (let i = 0; i < numSlack; i++) {
+        allVariableNames.push(`s${i + 1}`);
+      }
+
+      // Agregar nombres de variables artificiales
+      for (let i = 0; i < numArtificial; i++) {
+        allVariableNames.push(`a${i + 1}`);
+      }
+
+      // Identificar qué variable está en cada fila de la base
+      for (let j = 0; j < numVars; j++) {
+        let basicRow = -1;
+        let isBasic = true;
+        let nonZeroCount = 0;
+
+        for (let i = 0; i < numRows; i++) {
+          if (Math.abs(tableau[i][j]) > 1e-10) {
+            nonZeroCount++;
+            if (i > 0 && Math.abs(tableau[i][j] - 1) < 1e-10) {
+              basicRow = i - 1; // -1 porque la fila 0 es la función objetivo
+            } else if (i > 0) {
+              isBasic = false;
+              break;
+            }
+          }
+        }
+
+        if (isBasic && nonZeroCount === 1 && basicRow >= 0) {
+          basicVariables[basicRow] = allVariableNames[j] || `x${j + 1}`;
+        }
+      }
+
       // Guardar tableau final para debugging
       setFinalTableau({
         tableau: tableau.map((row) =>
@@ -415,6 +456,8 @@ const BigMSolver = () => {
         artificialStart: variables.length + numSlack,
         numArtificial,
         wasNormalized: constraints.some((c) => c.rhs < 0),
+        basicVariables,
+        allVariableNames,
       });
     } catch (err) {
       setError("Error al resolver el problema: " + err.message);
@@ -442,23 +485,23 @@ const BigMSolver = () => {
             Solucionador - Método de la Gran M
           </h1>
           <p className="text-slate-600 text-lg max-w-2xl mx-auto">
-            Resuelve problemas de programación lineal con restricciones de igualdad y desigualdad
+            Resuelve problemas de programación lineal con restricciones de
+            igualdad y desigualdad
           </p>
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           {/* Panel Principal */}
           <div className="xl:col-span-2 space-y-8">
-            
             {/* Botón de Ejemplo */}
-              <div className="flex justify-center">
-                <button
-                  onClick={loadExample}
-                  className="bg-slate-700 hover:bg-slate-800 text-white px-6 py-3 rounded-lg font-medium shadow-md transition-all duration-200"
-                >
-                  📊 Cargar Ejemplo
-                </button>
-              </div>
+            <div className="flex justify-center">
+              <button
+                onClick={loadExample}
+                className="bg-slate-700 hover:bg-slate-800 text-white px-6 py-3 rounded-lg font-medium shadow-md transition-all duration-200"
+              >
+                📊 Cargar Ejemplo
+              </button>
+            </div>
 
             {/* Variables */}
             <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
@@ -473,7 +516,8 @@ const BigMSolver = () => {
                     className="flex items-center bg-slate-100 border border-slate-300 text-slate-700 px-4 py-2 rounded-lg group hover:bg-slate-50 transition-colors"
                   >
                     <span className="font-medium">{variable}</span>
-                    {variables.length > 2 && (
+                    {/* Solo mostrar el trash en la última variable y si hay más de 2 variables */}
+                    {variables.length > 2 && index === variables.length - 1 && (
                       <button
                         onClick={() => removeVariable(index)}
                         className="ml-2 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -514,12 +558,16 @@ const BigMSolver = () => {
                     <option value="min">Minimizar</option>
                     <option value="max">Maximizar</option>
                   </select>
-                  <span className="text-xl font-semibold text-slate-700">Z =</span>
+                  <span className="text-xl font-semibold text-slate-700">
+                    Z =
+                  </span>
                 </div>
                 <div className="flex flex-wrap gap-3">
                   {variables.map((variable, index) => (
                     <div key={index} className="flex items-center gap-2">
-                      {index > 0 && <span className="text-slate-400 text-lg">+</span>}
+                      {index > 0 && (
+                        <span className="text-slate-400 text-lg">+</span>
+                      )}
                       <input
                         type="text"
                         inputMode="tel"
@@ -554,11 +602,16 @@ const BigMSolver = () => {
               </h2>
               <div className="space-y-4">
                 {constraints.map((constraint, cIndex) => (
-                  <div key={cIndex} className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                  <div
+                    key={cIndex}
+                    className="bg-emerald-50 border border-emerald-200 rounded-xl p-4"
+                  >
                     <div className="flex flex-wrap items-center gap-3">
                       {variables.map((variable, vIndex) => (
                         <div key={vIndex} className="flex items-center gap-2">
-                          {vIndex > 0 && <span className="text-slate-400">+</span>}
+                          {vIndex > 0 && (
+                            <span className="text-slate-400">+</span>
+                          )}
                           <input
                             type="text"
                             inputMode="tel"
@@ -633,7 +686,6 @@ const BigMSolver = () => {
 
           {/* Panel Lateral */}
           <div className="space-y-8">
-            
             {/* Botón Resolver */}
             <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
               <button
@@ -662,7 +714,7 @@ const BigMSolver = () => {
                   <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                   Solución Óptima
                 </h3>
-                
+
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 gap-3">
                     {variables.map((v, i) => (
@@ -677,7 +729,7 @@ const BigMSolver = () => {
                       </div>
                     ))}
                   </div>
-                  
+
                   <div className="bg-gradient-to-r from-slate-700 to-slate-800 text-white p-4 rounded-lg text-center">
                     <div className="text-sm opacity-90 mb-1">Valor Óptimo</div>
                     <div className="text-2xl font-bold">
@@ -697,7 +749,9 @@ const BigMSolver = () => {
 
             {/* Información */}
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6">
-              <h4 className="font-semibold text-slate-800 mb-3">ℹ️ Información</h4>
+              <h4 className="font-semibold text-slate-800 mb-3">
+                ℹ️ Información
+              </h4>
               <div className="text-sm text-slate-600 space-y-2">
                 <p>• Método especializado para restricciones ≥ y =</p>
                 <p>• Admite coeficientes negativos</p>
@@ -720,29 +774,46 @@ const BigMSolver = () => {
                 </span>
               )}
             </h3>
-            
+
             <div className="overflow-x-auto bg-slate-50 rounded-xl border border-slate-200">
               <table className="min-w-full">
                 <thead>
                   <tr className="bg-slate-100 border-b border-slate-200">
-                    <th className="px-4 py-3 text-left text-slate-700 font-semibold">Base</th>
+                    <th className="px-4 py-3 text-left text-slate-700 font-semibold">
+                      Base
+                    </th>
                     {variables.map((v, i) => (
-                      <th key={i} className="px-4 py-3 text-center text-slate-700 font-semibold">
+                      <th
+                        key={i}
+                        className="px-4 py-3 text-center text-slate-700 font-semibold"
+                      >
                         {v}
                       </th>
                     ))}
-                    <th className="px-4 py-3 text-center text-slate-600 text-sm">Artificiales</th>
-                    <th className="px-4 py-3 text-center text-slate-700 font-semibold">RHS</th>
+                    <th className="px-4 py-3 text-center text-slate-600 text-sm">
+                      Artificiales
+                    </th>
+                    <th className="px-4 py-3 text-center text-slate-700 font-semibold">
+                      RHS
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {finalTableau.tableau.map((row, i) => (
-                    <tr key={i} className="border-b border-slate-100 hover:bg-slate-25">
+                    <tr
+                      key={i}
+                      className="border-b border-slate-100 hover:bg-slate-25"
+                    >
                       <td className="px-4 py-3 font-medium text-slate-700">
-                        {i === 0 ? "Z" : `R${i}`}
+                        {i === 0
+                          ? "Z"
+                          : finalTableau.basicVariables[i - 1] || `R${i}`}
                       </td>
                       {row.slice(0, variables.length).map((val, j) => (
-                        <td key={j} className="px-4 py-3 text-center text-slate-600">
+                        <td
+                          key={j}
+                          className="px-4 py-3 text-center text-slate-600"
+                        >
                           {val}
                         </td>
                       ))}
@@ -757,9 +828,34 @@ const BigMSolver = () => {
                 </tbody>
               </table>
             </div>
-            
-            <div className="text-sm text-slate-500 mt-3 bg-slate-50 p-3 rounded-lg">
-              Variables artificiales en columnas {finalTableau.artificialStart} - {finalTableau.artificialStart + finalTableau.numArtificial - 1}
+
+            <div className="text-sm text-slate-500 mt-3 space-y-2">
+              <div className="bg-slate-50 p-3 rounded-lg">
+                <div className="font-medium text-slate-700 mb-1">
+                  variables:
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <div>
+                    • <strong>Variables originales:</strong>{" "}
+                    {variables.join(", ")}
+                  </div>
+                  <div>
+                    • <strong>Variables de holgura/exceso:</strong> s1, s2, ...
+                  </div>
+                  <div>
+                    • <strong>Variables artificiales:</strong> a1, a2, ...
+                  </div>
+                </div>
+              </div>
+              {finalTableau.numArtificial > 0 && (
+                <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+                  Variables artificiales en columnas{" "}
+                  {finalTableau.artificialStart} -{" "}
+                  {finalTableau.artificialStart +
+                    finalTableau.numArtificial -
+                    1}
+                </div>
+              )}
             </div>
           </div>
         )}
