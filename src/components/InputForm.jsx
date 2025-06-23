@@ -174,7 +174,7 @@ const BigMSolver = () => {
   };
 
   // Función para normalizar restricciones con RHS negativo
-  const normalizerestricciones = (restricciones) => {
+  const normalizarRestricciones = (restricciones) => {
     return restricciones.map((constraint) => {
       if (constraint.rhs < 0) {
         // Multiplicar toda la restricción por -1 e invertir el operador
@@ -207,7 +207,7 @@ const BigMSolver = () => {
       setError("");
 
       // Normalizar restricciones para manejar RHS negativos
-      const normalizedrestricciones = normalizerestricciones(restricciones);
+      const normalizedrestricciones = normalizarRestricciones(restricciones);
 
       let M = 1000000; // Valor grande para M
 
@@ -227,28 +227,28 @@ const BigMSolver = () => {
         }
       }
 
-      // Dimensiones del tableau
+      // Dimensiones de la tabla
       let numVars = variables.length + numSlack + numArtificial;
       let numRows = normalizedrestricciones.length + 1; // +1 para función objetivo
 
       // Crear tabla inicial
-      let tableau = Array(numRows)
+      let tabla = Array(numRows)
         .fill()
         .map(() => Array(numVars + 1).fill(0));
 
       // Configurar función objetivo (fila 0)
       for (let i = 0; i < variables.length; i++) {
         if (objective.esMaximizacion) {
-          tableau[0][i] = -objective.coeficientes[i];
+          tabla[0][i] = -objective.coeficientes[i];
         } else {
-          tableau[0][i] = objective.coeficientes[i];
+          tabla[0][i] = objective.coeficientes[i];
         }
       }
 
       // Agregar penalización M para variables artificiales
       let artificialIndex = variables.length + numSlack;
       for (let i = 0; i < numArtificial; i++) {
-        tableau[0][artificialIndex + i] = M;
+        tabla[0][artificialIndex + i] = M;
       }
 
       // Configurar restricciones
@@ -262,26 +262,26 @@ const BigMSolver = () => {
 
         // Coeficientes de variables originales
         for (let j = 0; j < variables.length; j++) {
-          tableau[row][j] = normalizedrestricciones[i].coeficientes[j];
+          tabla[row][j] = normalizedrestricciones[i].coeficientes[j];
         }
 
         // Variables auxiliares según tipo de restricción
         if (normalizedrestricciones[i].operador === "<=") {
-          tableau[row][slackIndex + currentSlack] = 1; // variable de holgura
+          tabla[row][slackIndex + currentSlack] = 1; // variable de holgura
           currentSlack++;
         } else if (normalizedrestricciones[i].operador === ">=") {
-          tableau[row][slackIndex + currentSlack] = -1; // variable de exceso
-          tableau[row][artificialIndex + currentArtificial] = 1; // variable artificial
+          tabla[row][slackIndex + currentSlack] = -1; // variable de exceso
+          tabla[row][artificialIndex + currentArtificial] = 1; // variable artificial
           currentSlack++;
           currentArtificial++;
         } else {
           // =
-          tableau[row][artificialIndex + currentArtificial] = 1; // variable artificial
+          tabla[row][artificialIndex + currentArtificial] = 1; // variable artificial
           currentArtificial++;
         }
 
         // RHS (ya normalizado para ser >= 0)
-        tableau[row][numVars] = normalizedrestricciones[i].rhs;
+        tabla[row][numVars] = normalizedrestricciones[i].rhs;
       }
 
       // Eliminar variables artificiales de la función objetivo
@@ -295,7 +295,7 @@ const BigMSolver = () => {
         ) {
           let row = i + 1;
           for (let j = 0; j <= numVars; j++) {
-            tableau[0][j] -= M * tableau[row][j];
+            tabla[0][j] -= M * tabla[row][j];
           }
           currentArtificial++;
         }
@@ -311,8 +311,8 @@ const BigMSolver = () => {
         let minValue = -1e-10; // tolerancia numérica
 
         for (let j = 0; j < numVars; j++) {
-          if (tableau[0][j] < minValue) {
-            minValue = tableau[0][j];
+          if (tabla[0][j] < minValue) {
+            minValue = tabla[0][j];
             pivotCol = j;
           }
         }
@@ -324,8 +324,8 @@ const BigMSolver = () => {
         let minRatio = Infinity;
 
         for (let i = 1; i < numRows; i++) {
-          if (tableau[i][pivotCol] > 1e-10) {
-            let ratio = tableau[i][numVars] / tableau[i][pivotCol];
+          if (tabla[i][pivotCol] > 1e-10) {
+            let ratio = tabla[i][numVars] / tabla[i][pivotCol];
             if (ratio >= 0 && ratio < minRatio) {
               minRatio = ratio;
               pivotRow = i;
@@ -339,19 +339,19 @@ const BigMSolver = () => {
         }
 
         // Operaciones de pivote
-        let pivotElement = tableau[pivotRow][pivotCol];
+        let pivotElement = tabla[pivotRow][pivotCol];
 
         // Normalizar fila pivote
         for (let j = 0; j <= numVars; j++) {
-          tableau[pivotRow][j] /= pivotElement;
+          tabla[pivotRow][j] /= pivotElement;
         }
 
         // Eliminar columna pivote en otras filas
         for (let i = 0; i < numRows; i++) {
-          if (i !== pivotRow && Math.abs(tableau[i][pivotCol]) > 1e-10) {
-            let factor = tableau[i][pivotCol];
+          if (i !== pivotRow && Math.abs(tabla[i][pivotCol]) > 1e-10) {
+            let factor = tabla[i][pivotCol];
             for (let j = 0; j <= numVars; j++) {
-              tableau[i][j] -= factor * tableau[pivotRow][j];
+              tabla[i][j] -= factor * tabla[pivotRow][j];
             }
           }
         }
@@ -374,16 +374,16 @@ const BigMSolver = () => {
           let count = 0;
 
           for (let row = 0; row < numRows; row++) {
-            if (Math.abs(tableau[row][j]) > 1e-10) {
+            if (Math.abs(tabla[row][j]) > 1e-10) {
               count++;
-              if (row !== i || Math.abs(tableau[row][j] - 1) > 1e-10) {
+              if (row !== i || Math.abs(tabla[row][j] - 1) > 1e-10) {
                 isBasicInThisRow = false;
                 break;
               }
             }
           }
 
-          if (isBasicInThisRow && count === 1 && tableau[i][numVars] > 1e-6) {
+          if (isBasicInThisRow && count === 1 && tabla[i][numVars] > 1e-6) {
             isInfeasible = true;
             break;
           }
@@ -406,9 +406,9 @@ const BigMSolver = () => {
           let count = 0;
 
           for (let row = 0; row < numRows; row++) {
-            if (Math.abs(tableau[row][j]) > 1e-10) {
+            if (Math.abs(tabla[row][j]) > 1e-10) {
               count++;
-              if (row !== i || Math.abs(tableau[row][j] - 1) > 1e-10) {
+              if (row !== i || Math.abs(tabla[row][j] - 1) > 1e-10) {
                 isBasicInThisRow = false;
                 break;
               }
@@ -416,14 +416,14 @@ const BigMSolver = () => {
           }
 
           if (isBasicInThisRow && count === 1) {
-            solutionValues[j] = Math.max(0, tableau[i][numVars]);
+            solutionValues[j] = Math.max(0, tabla[i][numVars]);
             break;
           }
         }
       }
 
       // Calcular valor objetivo
-      let objectiveValue = tableau[0][numVars];
+      let objectiveValue = tabla[0][numVars];
       if (objective.esMaximizacion) {
         objectiveValue = -objectiveValue;
       }
@@ -457,9 +457,9 @@ const BigMSolver = () => {
         let nonZeroCount = 0;
 
         for (let i = 0; i < numRows; i++) {
-          if (Math.abs(tableau[i][j]) > 1e-10) {
+          if (Math.abs(tabla[i][j]) > 1e-10) {
             nonZeroCount++;
-            if (i > 0 && Math.abs(tableau[i][j] - 1) < 1e-10) {
+            if (i > 0 && Math.abs(tabla[i][j] - 1) < 1e-10) {
               basicRow = i - 1; // -1 porque la fila 0 es la función objetivo
             } else if (i > 0) {
               isBasic = false;
@@ -473,9 +473,9 @@ const BigMSolver = () => {
         }
       }
 
-      // Guardar tableau final para debugging
+      // Guardar tabla final para debugging
       setTablaFinal({
-        tableau: tableau.map((row) =>
+        tabla: tabla.map((row) =>
           row.map((val) => Math.round(val * 1000) / 1000)
         ),
         numVars,
@@ -828,7 +828,7 @@ const BigMSolver = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {tablaFinal.tableau.map((row, i) => (
+                  {tablaFinal.tabla.map((row, i) => (
                     <tr
                       key={i}
                       className="border-b border-slate-100 hover:bg-slate-25"
