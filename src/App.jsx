@@ -1,11 +1,14 @@
 
 import './App.css'
-import BigMSolver from "./components/InputForm";
+import { BrowserRouter } from 'react-router-dom';
+import Router from "./Router/routes.jsx";
 
 const App = () => {
 
   return (
-    <BigMSolver/>
+    <BrowserRouter>
+      <Router />
+    </BrowserRouter>
   );
 };
 
