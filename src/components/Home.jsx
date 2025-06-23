@@ -1,29 +1,22 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calculator, ArrowRight, BookOpen, Target } from 'lucide-react';
+import { Calculator, BookOpen, Target } from 'lucide-react';
 
 // Componente reutilizable para las tarjetas de método
-const MetodoCard = ({ title, description, icon: Icon, color, onClick }) => (
+const MetodoCard = ({ title, description, icon: Icon, onClick }) => (
   <div
     onClick={onClick}
-    className={`group relative bg-gradient-to-br from-${color}-600 to-${color}-800 rounded-3xl p-8 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-${color}-500/25 border border-${color}-400/20 backdrop-blur-sm`}
+    className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 cursor-pointer hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1 group"
   >
-    <div className={`absolute inset-0 bg-gradient-to-br from-${color}-400/10 to-transparent rounded-3xl`}></div>
-    <div className="relative z-10">
-      <div className="flex items-center justify-between mb-6">
-        <div className={`p-4 bg-${color}-500/20 rounded-2xl`}>
-          <Icon className={`w-8 h-8 text-${color}-300`} />
-        </div>
-        <ArrowRight className={`w-6 h-6 text-${color}-300 group-hover:translate-x-2 transition-transform duration-300`} />
+    <div className="flex items-center gap-4 mb-4">
+      <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center group-hover:bg-slate-200 transition-colors">
+        <Icon className="w-6 h-6 text-slate-600" />
       </div>
-      <h3 className="text-2xl font-bold text-white mb-4">{title}</h3>
-      <p className={`text-${color}-100 text-lg leading-relaxed mb-6`}>
-        {description}
-      </p>
-      <div className={`flex items-center text-${color}-300 font-semibold`}>
-        <span>Comenzar resolución</span>
-        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
-      </div>
+      <h3 className="text-xl font-semibold text-slate-800">{title}</h3>
+    </div>
+    <p className="text-slate-600 leading-relaxed mb-4">{description}</p>
+    <div className="flex items-center text-slate-500 group-hover:text-slate-700 transition-colors">
+      <span className="text-sm font-medium">Resolver problema →</span>
     </div>
   </div>
 );
@@ -36,75 +29,112 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 relative overflow-hidden">
-
-      {/* Fondos decorativos */}
-      <div className="absolute inset-0">
-        <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-        <div className="absolute top-40 right-20 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse delay-1000"></div>
-        <div className="absolute bottom-20 left-40 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse delay-2000"></div>
-      </div>
-
-      {/* Partículas flotantes */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-2 h-2 bg-white rounded-full opacity-20"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animation: `float ${3 + Math.random() * 2}s ease-in-out infinite`
-            }}
-          ></div>
-        ))}
-      </div>
-
-      {/* Contenido principal */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-100 to-slate-200 py-8 px-4">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-16 animate-fade-in">
-          <div className="flex justify-center mb-8">
-            <div className="relative">
-              <Calculator className="w-20 h-20 text-white animate-pulse" />
-              <div className="absolute -inset-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full blur-lg opacity-30 animate-ping"></div>
-            </div>
-          </div>
-
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+        <div className="text-center mb-10">
+          <h1 className="text-4xl md:text-5xl font-bold text-slate-800 mb-4">
             Modelación Matemática
           </h1>
-
-          <p className="text-lg sm:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-slate-600 text-lg max-w-2xl mx-auto">
             Resuelve problemas de programación lineal con algoritmos avanzados
           </p>
         </div>
 
-        {/* Tarjetas de métodos */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 w-full max-w-4xl">
-          <MetodoCard
-            title="Método Big M"
-            description="Resuelve problemas de programación lineal con variables artificiales usando el método de la Gran M."
-            icon={BookOpen}
-            color="blue"
-            onClick={() => handleNavigation('/BigM')}
-          />
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          {/* Panel Principal */}
+          <div className="xl:col-span-2 space-y-8">
+            {/* Selector de método */}
+            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+              <h2 className="text-xl font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                <span className="w-2 h-2 bg-slate-600 rounded-full"></span>
+                Métodos Disponibles
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <MetodoCard
+                  title="Método Big M"
+                  description="Resuelve problemas de programación lineal con variables artificiales usando el método de la Gran M."
+                  icon={BookOpen}
+                  onClick={() => handleNavigation('/BigM')}
+                />
 
-          <MetodoCard
-            title="Método Dos Fases"
-            description="Algoritmo de dos fases para encontrar soluciones óptimas en problemas de programación lineal."
-            icon={Target}
-            color="purple"
-            onClick={() => handleNavigation('/DosFases')}
-          />
-        </div>
+                <MetodoCard
+                  title="Método Dos Fases"
+                  description="Algoritmo de dos fases para encontrar soluciones óptimas en problemas de programación lineal."
+                  icon={Target}
+                  onClick={() => handleNavigation('/DosFases')}
+                />
+              </div>
+            </div>
 
-        {/* Footer */}
-        <div className="mt-16 text-center">
-          <p className="text-gray-400 text-lg">
-            Selecciona el método que deseas utilizar para resolver tu problema
-          </p>
+            {/* Características */}
+            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+              <h2 className="text-xl font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
+                Características de los Métodos
+              </h2>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-amber-800">Método Big M</h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-amber-700 font-semibold">•</span>
+                        <span className="text-slate-600">Maneja restricciones ≥ y =</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-amber-700 font-semibold">•</span>
+                        <span className="text-slate-600">Admite coeficientes negativos</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-amber-700 font-semibold">•</span>
+                        <span className="text-slate-600">Optimización directa</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-amber-800">Método Dos Fases</h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-amber-700 font-semibold">•</span>
+                        <span className="text-slate-600">Proceso en dos etapas</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-amber-700 font-semibold">•</span>
+                        <span className="text-slate-600">Mayor precisión numérica</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-amber-700 font-semibold">•</span>
+                        <span className="text-slate-600">Análisis de factibilidad</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Panel Lateral */}
+          <div className="space-y-8">
+            {/* Ayuda */}
+            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+              <h4 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                ¿Cuál elegir?
+              </h4>
+              <div className="space-y-3 text-sm text-slate-600">
+                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                  <div className="font-medium text-emerald-800 mb-1">Big M:</div>
+                  <div>Ideal para problemas con restricciones mixtas (≥, =, ≤)</div>
+                </div>
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+                  <div className="font-medium text-slate-700 mb-1">Dos Fases:</div>
+                  <div>Mejor para sistemas complejos que requieren análisis detallado</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
