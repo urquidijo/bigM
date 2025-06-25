@@ -876,15 +876,6 @@ const BigMSolver = () => {
                   </div>
                 </div>
               </div>
-              {tablaFinal.numArtificial > 0 && (
-                <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
-                  Variables artificiales en columnas{" "}
-                  {tablaFinal.artificialStart} -{" "}
-                  {tablaFinal.artificialStart +
-                    tablaFinal.numArtificial -
-                    1}
-                </div>
-              )}
             </div>
           </div>
         )}
