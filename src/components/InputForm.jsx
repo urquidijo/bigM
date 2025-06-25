@@ -5,14 +5,13 @@ const BigMSolver = () => {
   //variables a usar
   const [variables, setVariables] = useState(["x1", "x2"]);
   const [objective, setObjective] = useState({
-    coeficientes: [5, 4],
+    coeficientes: [2, 3],
     esMaximizacion: false,
   });
   //un objeto para guardar las restricciones
   const [restricciones, setRestricciones] = useState([
-    { coeficientes: [1, 1], operador: ">=", rhs: 5 },
-    { coeficientes: [2, 1], operador: "<=", rhs: 10 },
-    { coeficientes: [1, 3], operador: "=", rhs: 12 },
+    { coeficientes: [1, 3], operador: ">=", rhs: 9 },
+    { coeficientes: [2, 1], operador: ">=", rhs: 8 },
   ]);
   const [solution, setSolution] = useState(null);
   const [error, setError] = useState("");
@@ -69,7 +68,6 @@ const BigMSolver = () => {
     if (!regex.test(value)) {
       return value.slice(0, -1);
     }
-
     return value;
   };
   // Función para manejar el pegado de texto
