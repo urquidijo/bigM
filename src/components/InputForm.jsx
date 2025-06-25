@@ -5,13 +5,14 @@ const BigMSolver = () => {
   //variables a usar
   const [variables, setVariables] = useState(["x1", "x2"]);
   const [objective, setObjective] = useState({
-    coeficientes: [2, 3],
+    coeficientes: [1.5, 2.5],
     esMaximizacion: false,
   });
   //un objeto para guardar las restricciones
   const [restricciones, setRestricciones] = useState([
-    { coeficientes: [1, 3], operador: ">=", rhs: 9 },
-    { coeficientes: [2, 1], operador: ">=", rhs: 8 },
+    { coeficientes: [2, 1], operador: "<=", rhs: 90 },
+    { coeficientes: [1, 1], operador: ">=", rhs: 50 },
+    { coeficientes: [1, 0], operador: "<=", rhs: 10 },
   ]);
   const [solution, setSolution] = useState(null);
   const [error, setError] = useState("");

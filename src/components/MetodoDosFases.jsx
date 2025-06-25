@@ -2,14 +2,15 @@ import React, { useState } from "react";
 import { Plus, Trash2, Calculator, AlertCircle } from "lucide-react";
 
 const MetodoDosFases = () => {
-  const [variables, setVariables] = useState(["x1", "x2", "x3"]);
+  const [variables, setVariables] = useState(["x1", "x2"]);
   const [objective, setObjective] = useState({
-    esMaximizacion: false,
-    coeficientes: ["2", "3", "1"],
+    esMaximizacion: true,
+    coeficientes: ["5", "8"],
   });
   const [restricciones, setRestricciones] = useState([
-    { coeficientes: ["1", "4", "2"], operador: ">=", rhs: "8" },
-    { coeficientes: ["3", "2", "0"], operador: ">=", rhs: "6" },
+    { coeficientes: ["2", "1"], operador: "=", rhs: "12" },
+    { coeficientes: ["1", "1"], operador: ">=", rhs: "8" },
+    { coeficientes: ["0", "1"], operador: "<=", rhs: "8" },
   ]);
 
   const [tablaFinal, setTablaFinal] = useState(null);
