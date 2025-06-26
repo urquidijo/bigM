@@ -34,7 +34,7 @@ export default function HomePage() {
         {/* Header */}
         <div className="text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-bold text-slate-800 mb-4">
-            Alex
+            Modelación Matemática
           </h1>
           <p className="text-slate-600 text-lg max-w-2xl mx-auto">
             Resuelve problemas de programación lineal con algoritmos avanzados
